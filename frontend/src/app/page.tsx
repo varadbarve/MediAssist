@@ -125,18 +125,16 @@ export default function Home() {
                 </div>
                 
                 {result.call_status.audio_file && (
-                  <button 
-                    onClick={() => {
-                      const audio = new Audio(`${API_URL}/temp_calls/${result.call_status.audio_file}`);
-                      audio.play();
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-all shadow-lg shadow-blue-900/40"
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                    </svg>
-                    Listen to AI Call
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-[10px] text-zinc-600 uppercase font-bold text-right mr-2">Simulated Call Audio</p>
+                    <audio 
+                      controls 
+                      className="h-10 rounded-lg bg-zinc-800"
+                      src={`${API_URL}/temp_calls/${result.call_status.audio_file}`}
+                    >
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
                 )}
               </div>
             </div>
