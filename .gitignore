@@ -157,3 +157,9 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Project Specific
+backend/mediassist.db
+backend/temp_calls/
+backend/.env
+frontend/.env
