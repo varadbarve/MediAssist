@@ -4,7 +4,14 @@ from app.api.v1.api import api_router
 
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.db.base import Base
+from app.db.session import engine
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
 app = FastAPI(title=PROJECT_NAME)
+
 
 # Set all origins enabled
 app.add_middleware(
