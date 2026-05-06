@@ -1,46 +1,40 @@
 import google.generativeai as genai
+from app.core.config import GEMINI_API_KEY
 from typing import Dict
-from app.core import config
 
-def generate_patient_summary(report_data: Dict) -> str:
-    """
-    Generates a patient-friendly summary using Google Gemini (Free Tier).
-    """
-    print("Generating AI summary with Gemini...")
+# Configure Gemini
+genai.configure(api_key=GEMINI_API_KEY)
 
-    if not config.GEMINI_API_KEY:
-        # Fallback to local rule-based logic if no API key is provided
-        return _generate_fallback_summary(report_data)
+def generate_patient_summary(extracted_data: Dict) -> str:
+    """
+    Generates a detailed, compassionate medical summary using Gemini.
+    """
+    if not extracted_data:
+        return "No significant medical data was found in the report. Please consult your doctor for a manual review."
+
+    prompt = f"""
+    You are 'MediAssist', a compassionate medical assistant. 
+    Analyze these lab results and write a 3-4 sentence explanation for a patient.
+    
+    Data: {extracted_data}
+    
+    Rules:
+    1. Be very friendly and reassuring.
+    2. Explain what each value means in simple terms.
+    3. If values are high or low, suggest a general healthy tip (e.g., drink more water, eat more greens).
+    4. End with: 'Please remember to discuss these results with your doctor.'
+    5. Do NOT give a medical diagnosis.
+    """
 
     try:
-        genai.configure(api_key=config.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-pro')
-        
-        prompt = f"""
-        You are a helpful medical assistant. Explain these medical results in simple, 
-        patient-friendly language. 
-        
-        **SAFETY RULES:**
-        - DO NOT diagnose diseases.
-        - DO NOT prescribe new medicines.
-        - DO NOT override doctor advice.
-        
-        Results: {report_data}
-        """
-        
+        model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(prompt)
-        return response.text
+        return response.text.strip()
     except Exception as e:
         print(f"Gemini Error: {e}")
-        return _generate_fallback_summary(report_data)
-
-def _generate_fallback_summary(report_data: Dict) -> str:
-    summary_parts = []
-    if report_data.get("hemoglobin", 15) < 14:
-        summary_parts.append("Your hemoglobin is lower than normal.")
-    if report_data.get("vitamin_d", 30) < 30:
-        summary_parts.append("Your Vitamin D levels are deficient.")
-    if report_data.get("cholesterol", 200) > 200:
-        summary_parts.append("Your cholesterol levels are elevated.")
-    
-    return " ".join(summary_parts) if summary_parts else "All values are within the normal range."
+        # Detailed Fallback if Gemini is down
+        summary = "I've reviewed your latest lab results. "
+        for key, val in extracted_data.items():
+            summary += f"Your {key} is {val}. "
+        summary += "Everything looks manageable, but please review this with your primary physician to be certain. Stay hydrated!"
+        return summary

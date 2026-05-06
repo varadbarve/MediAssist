@@ -7,10 +7,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.db.base import Base
 from app.db.session import engine
 
+from fastapi.staticfiles import StaticFiles
+import os
+
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title=PROJECT_NAME)
+
+# Ensure temp_calls exists and serve it
+if not os.path.exists("temp_calls"):
+    os.makedirs("temp_calls")
+app.mount("/temp_calls", StaticFiles(directory="temp_calls"), name="temp_calls")
 
 
 # Set all origins enabled

@@ -102,7 +102,7 @@ export default function Home() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                 {Object.entries(result.extracted_data || {}).map(([key, val]: any) => (
                   <div key={key} className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50">
                     <p className="text-xs text-zinc-500 uppercase font-bold tracking-tight">{key}</p>
@@ -118,11 +118,26 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="mt-8 pt-8 border-t border-zinc-800">
+              <div className="mt-8 pt-8 border-t border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4 text-sm text-zinc-500">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                  Call Status: {result.call_status.message}
+                  {result.call_status.message}
                 </div>
+                
+                {result.call_status.audio_file && (
+                  <button 
+                    onClick={() => {
+                      const audio = new Audio(`${API_URL}/temp_calls/${result.call_status.audio_file}`);
+                      audio.play();
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-all shadow-lg shadow-blue-900/40"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                    </svg>
+                    Listen to AI Call
+                  </button>
+                )}
               </div>
             </div>
           ) : (
