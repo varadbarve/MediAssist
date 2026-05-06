@@ -4,10 +4,10 @@ pydantic
 python-dotenv
 openai
 twilio
-python-multipart # For FastAPI Form data
+python-multipart
 sqlalchemy
 alembic
-google-generativeai  # Free AI Summarization
-gTTS                 # Free Text-to-Speech
-pymupdf              # Free PDF/OCR Processing
-
+google-generativeai
+gTTS
+pymupdf
+psycopg2-binary
