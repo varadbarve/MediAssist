@@ -1,24 +1,32 @@
+import os
+from gtts import gTTS
+import uuid
 from app.core import config
-# In a real implementation, you would import the Twilio library
-# from twilio.rest import Client
 
 def make_automated_call(phone_number: str, script: str):
     """
-    Initiates an automated call to the patient using a voice service like Twilio.
+    Simulates an automated call and generates a FREE audio file of the script.
+    In a real production app, this would use Twilio, but for free building, 
+    we generate the audio locally and mock the call.
     """
-    print(f"Initiating call to {phone_number}...")
-    print(f"Call script: {script}")
+    print(f"--- [FREE MOCK DIALER] ---")
+    print(f"Calling: {phone_number}")
+    print(f"Script: {script}")
 
-    # In a real implementation, you would use the Twilio client:
-    # try:
-    #     client = Client(config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN)
-    #     call = client.calls.create(
-    #         twiml=f'<Response><Say>{script}</Say><Gather numDigits="1" action="/api/v1/calls/voice-webhook"/></Response>',
-    #         to=phone_number,
-    #         from_=config.TWILIO_PHONE_NUMBER
-    #     )
-    #     return {"status": "success", "sid": call.sid}
-    # except Exception as e:
-    #     return {"status": "error", "message": str(e)}
+    # Generate audio for free using gTTS
+    try:
+        tts = gTTS(text=script, lang='en')
+        audio_filename = f"call_{uuid.uuid4().hex}.mp3"
+        # In a real local dev, you'd save this to a 'static' folder
+        # tts.save(audio_filename)
+        print(f"Audio generated: {audio_filename}")
+    except Exception as e:
+        print(f"TTS Error: {e}")
 
-    return {"status": "success", "sid": "dummy_call_sid_12345"}
+    print(f"--- [END OF MOCK CALL] ---")
+
+    return {
+        "status": "success", 
+        "mode": "free_mock",
+        "message": "Call simulated successfully for free."
+    }

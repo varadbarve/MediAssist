@@ -6,6 +6,8 @@ openai
 twilio
 python-multipart # For FastAPI Form data
 sqlalchemy
-psycopg2-binary
 alembic
+google-generativeai  # Free AI Summarization
+gTTS                 # Free Text-to-Speech
+pymupdf              # Free PDF/OCR Processing
 

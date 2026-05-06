@@ -1,39 +1,46 @@
+import google.generativeai as genai
 from typing import Dict
 from app.core import config
-# In a real implementation, you would import the OpenAI library
-# import openai
 
 def generate_patient_summary(report_data: Dict) -> str:
     """
-    Generates a patient-friendly summary of the medical report using an LLM.
-    Follows strict safety rules from the PRD.
+    Generates a patient-friendly summary using Google Gemini (Free Tier).
     """
-    print("Generating AI summary...")
+    print("Generating AI summary with Gemini...")
 
-    # In a real implementation, you would use the openai client:
-    # openai.api_key = config.OPENAI_API_KEY
-    #
-    # prompt = f"""
-    # You are a helpful medical assistant. Your role is to explain medical report
-    # results in simple, patient-friendly language.
-    #
-    # **SAFETY RULES:**
-    # - DO NOT diagnose diseases.
-    # - DO NOT prescribe new medicines.
-    # - DO NOT override doctor advice.
-    #
-    # Explain these results simply: {report_data}
-    # """
-    # response = openai.Completion.create(engine="text-davinci-003", prompt=prompt, max_tokens=150)
-    # return response.choices[0].text.strip()
+    if not config.GEMINI_API_KEY:
+        # Fallback to local rule-based logic if no API key is provided
+        return _generate_fallback_summary(report_data)
 
-    # Dummy response based on PRD example for demonstration
+    try:
+        genai.configure(api_key=config.GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-pro')
+        
+        prompt = f"""
+        You are a helpful medical assistant. Explain these medical results in simple, 
+        patient-friendly language. 
+        
+        **SAFETY RULES:**
+        - DO NOT diagnose diseases.
+        - DO NOT prescribe new medicines.
+        - DO NOT override doctor advice.
+        
+        Results: {report_data}
+        """
+        
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        print(f"Gemini Error: {e}")
+        return _generate_fallback_summary(report_data)
+
+def _generate_fallback_summary(report_data: Dict) -> str:
     summary_parts = []
-    if report_data.get("hemoglobin", 15) < 14: # Example normal value
+    if report_data.get("hemoglobin", 15) < 14:
         summary_parts.append("Your hemoglobin is lower than normal.")
     if report_data.get("vitamin_d", 30) < 30:
         summary_parts.append("Your Vitamin D levels are deficient.")
     if report_data.get("cholesterol", 200) > 200:
         summary_parts.append("Your cholesterol levels are elevated.")
-
+    
     return " ".join(summary_parts) if summary_parts else "All values are within the normal range."
