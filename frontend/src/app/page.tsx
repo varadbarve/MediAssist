@@ -1,124 +1,135 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 
 export default function Home() {
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) return;
+
+    setLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('patient_id', 'p' + Math.floor(Math.random() * 1000));
+    formData.append('patient_phone_number', '+1234567890');
+
+    try {
+      const res = await fetch(`${API_URL}/api/v1/reports/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      setResult(data);
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('Upload failed. Check console for details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background p-8">
-      <header className="mb-12 flex items-center justify-between">
+    <div className="min-h-screen bg-[#0a0a0b] text-zinc-100 p-8 font-sans">
+      <header className="max-w-6xl mx-auto mb-16 flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">MediAssist AI</h1>
-          <p className="mt-2 text-zinc-500">Automated Patient Follow-up & Report Explanation</p>
-        </div>
-        <div className="flex gap-4">
-          <button className="rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-all hover:opacity-90">
-            Upload Report
-          </button>
-          <button className="rounded-lg border border-border bg-card px-4 py-2 font-medium transition-all hover:bg-accent">
-            Settings
-          </button>
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+            MediAssist AI
+          </h1>
+          <p className="mt-2 text-zinc-500">Free Automated Patient Follow-up System</p>
         </div>
       </header>
 
-      <main className="grid grid-cols-1 gap-8 md:grid-cols-3">
-        {/* Status Overview */}
-        <section className="col-span-1 space-y-6 md:col-span-2">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <h3 className="text-sm font-medium text-zinc-500">Total Calls Today</h3>
-              <p className="mt-2 text-3xl font-bold">124</p>
-              <div className="mt-2 flex items-center text-xs text-green-500">
-                <span>↑ 12% from yesterday</span>
+      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Upload Section */}
+        <section className="lg:col-span-5 space-y-6">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-8 shadow-2xl backdrop-blur-sm">
+            <h2 className="text-xl font-semibold mb-6">Upload Lab Report</h2>
+            <form onSubmit={handleUpload} className="space-y-4">
+              <div className="relative group">
+                <input
+                  type="file"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                  id="file-upload"
+                  accept=".pdf"
+                />
+                <label
+                  htmlFor="file-upload"
+                  className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-zinc-700 rounded-xl cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <svg className="w-10 h-10 mb-3 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p className="mb-2 text-sm text-zinc-400">
+                      <span className="font-semibold">{file ? file.name : "Click to upload"}</span>
+                    </p>
+                    <p className="text-xs text-zinc-500">PDF (MAX. 10MB)</p>
+                  </div>
+                </label>
               </div>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <h3 className="text-sm font-medium text-zinc-500">Successful Explanations</h3>
-              <p className="mt-2 text-3xl font-bold">92%</p>
-              <div className="mt-2 flex items-center text-xs text-green-500">
-                <span>↑ 3% from average</span>
-              </div>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <h3 className="text-sm font-medium text-zinc-500">Pending Escalations</h3>
-              <p className="mt-2 text-3xl font-bold">5</p>
-              <div className="mt-2 flex items-center text-xs text-red-500">
-                <span>Critical attention required</span>
-              </div>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <h3 className="text-sm font-medium text-zinc-500">Reports Processed</h3>
-              <p className="mt-2 text-3xl font-bold">1,042</p>
-            </div>
-          </div>
 
-          {/* Recent Activity */}
-          <div className="rounded-xl border border-border bg-card shadow-sm">
-            <div className="border-b border-border p-6">
-              <h2 className="text-xl font-bold">Recent Patient Interactions</h2>
-            </div>
-            <div className="p-6">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="text-xs font-medium uppercase text-zinc-500">
-                    <th className="pb-4">Patient</th>
-                    <th className="pb-4">Status</th>
-                    <th className="pb-4">Action</th>
-                    <th className="pb-4 text-right">Time</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {[
-                    { name: 'John Doe', status: 'Call Completed', action: 'Summary Delivered', time: '10 mins ago' },
-                    { name: 'Jane Smith', status: 'In Progress', action: 'Asking Questions', time: '2 mins ago' },
-                    { name: 'Robert Brown', status: 'Escalated', action: 'Needs Doctor Call', time: '1 hour ago' },
-                    { name: 'Alice Wilson', status: 'Pending', action: 'Report Uploaded', time: 'Just now' },
-                  ].map((item, i) => (
-                    <tr key={i} className="text-sm">
-                      <td className="py-4 font-medium">{item.name}</td>
-                      <td className="py-4">
-                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          item.status === 'Call Completed' ? 'bg-green-100 text-green-700' :
-                          item.status === 'Escalated' ? 'bg-red-100 text-red-700' :
-                          'bg-blue-100 text-blue-700'
-                        }`}>
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="py-4 text-zinc-500">{item.action}</td>
-                      <td className="py-4 text-right text-zinc-500">{item.time}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+              <button
+                type="submit"
+                disabled={!file || loading}
+                className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-white shadow-lg shadow-emerald-900/20 transition-all flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Processing...
+                  </>
+                ) : "Analyze Report & Start Call"}
+              </button>
+            </form>
           </div>
         </section>
 
-        {/* Sidebar/Quick Actions */}
-        <section className="col-span-1 space-y-6">
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-bold">System Status</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Twilio Voice API</span>
-                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+        {/* Results Section */}
+        <section className="lg:col-span-7">
+          {result ? (
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-8 shadow-2xl backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold">Analysis Results</h2>
+                <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-full uppercase tracking-widest border border-emerald-500/20">
+                  Completed
+                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">OpenAI LLM</span>
-                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                {Object.entries(result.extracted_data || {}).map(([key, val]: any) => (
+                  <div key={key} className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50">
+                    <p className="text-xs text-zinc-500 uppercase font-bold tracking-tight">{key}</p>
+                    <p className="text-2xl font-mono text-emerald-400">{val}</p>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">ElevenLabs TTS</span>
-                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">AI Patient Summary</h3>
+                <div className="p-6 rounded-xl bg-blue-500/5 border border-blue-500/20 text-zinc-200 leading-relaxed italic">
+                  "{result.ai_summary}"
+                </div>
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-zinc-800">
+                <div className="flex items-center gap-4 text-sm text-zinc-500">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                  Call Status: {result.call_status.message}
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className="rounded-xl bg-gradient-to-br from-primary to-blue-600 p-6 text-white shadow-lg">
-            <h2 className="mb-2 text-lg font-bold">New Feature</h2>
-            <p className="text-sm opacity-90">Multi-language support is now available for patient summaries. Check settings to enable.</p>
-            <button className="mt-4 rounded-lg bg-white px-4 py-2 text-sm font-medium text-primary hover:bg-zinc-100">
-              Learn More
-            </button>
-          </div>
+          ) : (
+            <div className="h-full flex items-center justify-center border border-dashed border-zinc-800 rounded-2xl p-12 text-zinc-600">
+              Upload a report to see the AI analysis here.
+            </div>
+          )}
         </section>
       </main>
     </div>
