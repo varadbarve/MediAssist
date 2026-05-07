@@ -1,14 +1,13 @@
 import os
-from gtts import gTTS
+import edge_tts
+import asyncio
 import uuid
-from app.core import config
 
 def make_automated_call(phone_number: str, script: str):
     """
-    Simulates an automated call and generates a FREE audio file.
+    Simulates an automated call using high-quality Microsoft Edge voices (FREE & UNLIMITED).
     """
-    # Internal logging (only shows in your terminal/Render logs)
-    print(f"[LOG] Generating voice for: {phone_number}")
+    print(f"[LOG] Generating premium voice for: {phone_number}")
 
     output_dir = "temp_calls"
     if not os.path.exists(output_dir):
@@ -17,18 +16,25 @@ def make_automated_call(phone_number: str, script: str):
     audio_filename = f"call_{uuid.uuid4().hex[:8]}.mp3"
     file_path = os.path.join(output_dir, audio_filename)
     
+    # We use a professional sounding female voice (Emma)
+    voice = "en-GB-SoniaNeural" 
+
     try:
-        tts = gTTS(text=script, lang='en')
-        tts.save(file_path)
-        status_msg = "Voice simulation complete."
+        # edge-tts is asynchronous, so we run it in a small event loop
+        async def generate():
+            communicate = edge_tts.Communicate(script, voice)
+            await communicate.save(file_path)
+        
+        asyncio.run(generate())
+        status_msg = "Premium voice simulation complete."
     except Exception as e:
-        print(f"[ERROR] TTS Failed: {e}")
+        print(f"[ERROR] edge-tts Failed: {e}")
         status_msg = "Audio generation unavailable."
         audio_filename = None
 
     return {
         "status": "success", 
-        "mode": "free_mock",
+        "mode": "edge_premium",
         "audio_file": audio_filename,
-        "message": status_msg # This is what the user sees
+        "message": status_msg
     }

@@ -11,3 +11,4 @@ google-generativeai
 gTTS
 pymupdf
 psycopg2-binary
+edge-tts
