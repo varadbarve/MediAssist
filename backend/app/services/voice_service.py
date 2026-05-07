@@ -16,7 +16,7 @@ async def make_automated_call(phone_number: str, script: str):
     file_path = os.path.join(output_dir, audio_filename)
     
     # Professional female voice
-    voice = "en-GB-SoniaNeural" 
+    voice = "en-IN-NeerjaNeural" 
 
     try:
         communicate = edge_tts.Communicate(script, voice)
