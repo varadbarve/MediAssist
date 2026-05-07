@@ -279,7 +279,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="mt-20 pt-8 border-t border-zinc-900 text-center">
           <p className="text-zinc-600 text-xs uppercase tracking-widest font-bold">
-            MediAssist AI &bull; Smart Healthcare Systems &bull; 2024
+            MediAssist AI &bull; Smart Healthcare Systems &bull; 2026
           </p>
         </footer>
       </div>
