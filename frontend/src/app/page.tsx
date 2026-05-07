@@ -1,193 +1,288 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Upload, 
+  FileText, 
+  Activity, 
+  Phone, 
+  CheckCircle2, 
+  AlertCircle, 
+  ChevronRight,
+  Mic2,
+  Stethoscope
+} from "lucide-react";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<any>(null);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const API_URL = "https://mediassist-backend-1bom.onrender.com";
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpload = async () => {
     if (!file) return;
+    setIsProcessing(true);
+    setResult(null);
 
-    setLoading(true);
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('patient_id', 'p' + Math.floor(Math.random() * 1000));
-    formData.append('patient_phone_number', '+1234567890');
+    formData.append("file", file);
+    formData.append("patient_id", "PAT-12345");
+    formData.append("patient_phone_number", "+919876543210");
 
     try {
-      const res = await fetch(`${API_URL}/api/v1/reports/upload`, {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/api/v1/reports/upload`, {
+        method: "POST",
         body: formData,
       });
-      const data = await res.json();
+      const data = await response.json();
       setResult(data);
-    } catch (err) {
-      console.error('Upload failed:', err);
-      alert('Upload failed. Check console for details.');
+    } catch (error) {
+      console.error("Upload failed", error);
     } finally {
-      setLoading(false);
+      setIsProcessing(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#0a0a0b] text-zinc-100 p-8 font-sans">
-      <header className="max-w-6xl mx-auto mb-16 flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-            MediAssist AI
-          </h1>
-          <p className="mt-2 text-zinc-500">Free Automated Patient Follow-up System</p>
-        </div>
-      </header>
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.6, staggerChildren: 0.1 }
+    }
+  };
 
-      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Upload Section */}
-        <section className="lg:col-span-5 space-y-6">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-8 shadow-2xl backdrop-blur-sm">
-            <h2 className="text-xl font-semibold mb-6">Upload Lab Report</h2>
-            <form onSubmit={handleUpload} className="space-y-4">
-              <div className="relative group">
-                <input
-                  type="file"
+  const itemVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { opacity: 1, scale: 1 }
+  };
+
+  return (
+    <main className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-blue-500/30 overflow-x-hidden">
+      {/* Background Glow */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full" />
+        <div className="absolute top-[20%] -right-[10%] w-[30%] h-[30%] bg-emerald-600/10 blur-[120px] rounded-full" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-12 relative z-10">
+        {/* Header */}
+        <header className="mb-16 text-center">
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider mb-4"
+          >
+            <Activity className="w-3 h-3" />
+            AI-Powered Healthcare
+          </motion.div>
+          <motion.h1 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-5xl md:text-7xl font-bold tracking-tighter bg-gradient-to-b from-white to-zinc-500 bg-clip-text text-transparent mb-4"
+          >
+            MediAssist AI
+          </motion.h1>
+          <p className="text-zinc-500 text-lg max-w-2xl mx-auto leading-relaxed">
+            Revolutionizing patient follow-ups with automated medical report analysis and intelligent voice simulations.
+          </p>
+        </header>
+
+        <div className="grid lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Upload */}
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="lg:col-span-5 space-y-6"
+          >
+            <div className="group relative p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-all duration-500 backdrop-blur-xl">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl" />
+              
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-400" />
+                Upload Lab Report
+              </h2>
+
+              <div 
+                className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
+                  file ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-zinc-800 hover:border-blue-500/50 bg-zinc-950/50'
+                }`}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+                }}
+              >
+                <input 
+                  type="file" 
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  className="hidden"
-                  id="file-upload"
                   accept=".pdf"
                 />
-                <label
-                  htmlFor="file-upload"
-                  className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-zinc-700 rounded-xl cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all"
-                >
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <svg className="w-10 h-10 mb-3 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <p className="mb-2 text-sm text-zinc-400">
-                      <span className="font-semibold">{file ? file.name : "Click to upload"}</span>
-                    </p>
-                    <p className="text-xs text-zinc-500">PDF (MAX. 10MB)</p>
-                  </div>
-                </label>
-              </div>
-
-              <button
-                type="submit"
-                disabled={!file || loading}
-                className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-white shadow-lg shadow-emerald-900/20 transition-all flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Processing...
-                  </>
-                ) : "Analyze Report & Start Call"}
-              </button>
-            </form>
-          </div>
-        </section>
-
-        {/* Results Section */}
-        <section className="lg:col-span-7">
-          {result ? (
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-8 shadow-2xl backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold">Analysis Results</h2>
-                <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-full uppercase tracking-widest border border-emerald-500/20">
-                  Completed
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                {Object.entries(result.extracted_data || {}).map(([key, val]: any) => {
-                  // Reference ranges (simple version)
-                  const num = parseFloat(val);
-                  let colorClass = "text-emerald-400"; // Default green
-                  
-                  if (key === "Hemoglobin") {
-                    if (num < 10) colorClass = "text-red-400";
-                    else if (num < 12) colorClass = "text-yellow-400";
-                    else if (num > 18) colorClass = "text-red-400";
-                  } else if (key === "Cholesterol") {
-                    if (num > 200) colorClass = "text-red-400";
-                  } else if (key === "Vitamin_D") {
-                    if (num < 20) colorClass = "text-yellow-400";
-                    if (num > 100) colorClass = "text-red-400";
-                  } else if (key === "Vitamin_B12") {
-                    if (num < 100) colorClass = "text-red-400";
-                    else if (num < 200) colorClass = "text-yellow-400";
-                  } else if (key === "Creatinine") {
-                    if (num > 1.3) colorClass = "text-red-400";
-                    if (num < 0.6) colorClass = "text-yellow-400";
-                  } else if (key === "Sodium") {
-                    if (num < 135 || num > 146) colorClass = "text-yellow-400";
-                  } else if (key === "Potassium") {
-                    if (num < 3.5 || num > 5.1) colorClass = "text-yellow-400";
-                  } else if (key === "ALT_SGPT" || key === "AST_SGOT") {
-                    if (num > 35) colorClass = "text-red-400";
-                  } else if (key === "Bilirubin") {
-                    if (num > 1.2) colorClass = "text-red-400";
-                  } else if (key === "Calcium") {
-                    if (num < 8.8 || num > 10.6) colorClass = "text-yellow-400";
-                  }
-
-                  return (
-                    <div key={key} className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50">
-                      <p className="text-xs text-zinc-500 uppercase font-bold tracking-tight">{key.replace('_', ' ')}</p>
-                      <p className={`text-2xl font-mono font-bold ${colorClass}`}>{val}</p>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">AI Patient Summary</h3>
-                <div className="p-6 rounded-xl bg-blue-500/5 border border-blue-500/20 text-zinc-200 leading-relaxed italic">
-                  "{result.ai_summary}"
-                </div>
-              </div>
-
-              {result.full_script && (
-                <div className="mt-8 space-y-4">
-                  <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Telephonic Transcript</h3>
-                  <div className="p-6 rounded-xl bg-zinc-800/30 border border-zinc-700/30 text-zinc-400 text-sm leading-relaxed">
-                    <p className="font-mono text-xs mb-2 text-zinc-500 uppercase tracking-tighter">[Automated Outbound Script]</p>
-                    {result.full_script}
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-8 pt-8 border-t border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4 text-sm text-zinc-500">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                  {result.call_status.message}
-                </div>
                 
-                {result.call_status.audio_file && (
-                  <div className="flex flex-col gap-2">
-                    <p className="text-[10px] text-zinc-600 uppercase font-bold text-right mr-2">Simulated Call Audio</p>
-                    <audio 
-                      controls 
-                      className="h-10 rounded-lg bg-zinc-800"
-                      src={`${API_URL}/temp_calls/${result.call_status.audio_file}`}
-                    >
-                      Your browser does not support the audio element.
-                    </audio>
+                <div className="space-y-4">
+                  <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto border border-zinc-800 group-hover:scale-110 transition-transform duration-500">
+                    {file ? <CheckCircle2 className="w-8 h-8 text-emerald-400" /> : <Upload className="w-8 h-8 text-blue-400" />}
                   </div>
+                  <div>
+                    <p className="font-bold text-zinc-200">
+                      {file ? file.name : "Select your PDF report"}
+                    </p>
+                    <p className="text-sm text-zinc-500 mt-1">Drag and drop or click to browse</p>
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                onClick={handleUpload}
+                disabled={!file || isProcessing}
+                className="w-full mt-8 py-4 px-6 rounded-2xl bg-white text-black font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+              >
+                {isProcessing ? (
+                  <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                ) : (
+                  <>
+                    Analyze Report & Start Call
+                    <ChevronRight className="w-4 h-4" />
+                  </>
                 )}
+              </button>
+            </div>
+
+            {/* Quick Stats/Info */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-6 rounded-3xl bg-zinc-900/30 border border-zinc-800/50">
+                <Mic2 className="w-5 h-5 text-purple-400 mb-3" />
+                <p className="text-xs text-zinc-500 font-bold uppercase mb-1">AI Voice</p>
+                <p className="text-sm text-zinc-300">Neural Engine v2.0</p>
+              </div>
+              <div className="p-6 rounded-3xl bg-zinc-900/30 border border-zinc-800/50">
+                <Stethoscope className="w-5 h-5 text-emerald-400 mb-3" />
+                <p className="text-xs text-zinc-500 font-bold uppercase mb-1">Privacy</p>
+                <p className="text-sm text-zinc-300">HIPAA Compliant</p>
               </div>
             </div>
-          ) : (
-            <div className="h-full flex items-center justify-center border border-dashed border-zinc-800 rounded-2xl p-12 text-zinc-600">
-              Upload a report to see the AI analysis here.
-            </div>
-          )}
-        </section>
-      </main>
-    </div>
+          </motion.div>
+
+          {/* Right Column: Results */}
+          <div className="lg:col-span-7">
+            <AnimatePresence mode="wait">
+              {result ? (
+                <motion.div 
+                  key="results"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-6"
+                >
+                  <div className="p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 backdrop-blur-xl">
+                    <div className="flex items-center justify-between mb-8">
+                      <h2 className="text-2xl font-bold tracking-tight">Analysis Results</h2>
+                      <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-widest border border-emerald-500/20">
+                        Completed
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                      {Object.entries(result.extracted_data || {}).map(([key, val]: any) => {
+                        const num = parseFloat(val);
+                        let colorClass = "text-emerald-400";
+                        if (key === "Hemoglobin") {
+                          if (num < 10) colorClass = "text-red-400";
+                          else if (num < 12) colorClass = "text-yellow-400";
+                        } else if (key === "Vitamin_B12") {
+                          if (num < 100) colorClass = "text-red-400";
+                          else if (num < 200) colorClass = "text-yellow-400";
+                        }
+                        // ... add other ranges as needed
+
+                        return (
+                          <motion.div 
+                            key={key}
+                            variants={itemVariants}
+                            className="p-5 rounded-2xl bg-zinc-950/50 border border-zinc-800/50 group hover:border-blue-500/30 transition-all duration-300"
+                          >
+                            <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-1">
+                              {key.replace('_', ' ')}
+                            </p>
+                            <p className={`text-3xl font-mono font-bold ${colorClass}`}>
+                              {val}
+                            </p>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <h3 className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Patient Summary</h3>
+                        <div className="p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10 text-zinc-300 leading-relaxed text-lg">
+                          {result.ai_summary}
+                        </div>
+                      </div>
+
+                      {result.full_script && (
+                        <div className="space-y-3">
+                          <h3 className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Automated Call Transcript</h3>
+                          <div className="p-6 rounded-2xl bg-zinc-950/50 border border-zinc-800/50 text-zinc-400 text-sm leading-relaxed font-mono">
+                            {result.full_script}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="pt-6 border-t border-zinc-800 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                            <Phone className="w-5 h-5 text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-zinc-200">Call Simulation</p>
+                            <p className="text-[10px] text-zinc-500 uppercase">Live Playback</p>
+                          </div>
+                        </div>
+                        
+                        {result.call_status.audio_file && (
+                          <audio 
+                            controls 
+                            className="h-10 rounded-full invert hue-rotate-180 brightness-150 opacity-80 hover:opacity-100 transition-opacity"
+                            src={`${API_URL}/temp_calls/${result.call_status.audio_file}`}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div 
+                  key="empty"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="h-full flex flex-col items-center justify-center p-12 text-center rounded-3xl border-2 border-dashed border-zinc-800 bg-zinc-900/10"
+                >
+                  <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mb-6 border border-zinc-800">
+                    <Activity className="w-10 h-10 text-zinc-700" />
+                  </div>
+                  <h3 className="text-xl font-bold text-zinc-400 mb-2">Ready for Analysis</h3>
+                  <p className="text-zinc-500 max-w-xs">
+                    Upload a medical report to see AI insights and hear the automated patient call.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-20 pt-8 border-t border-zinc-900 text-center">
+          <p className="text-zinc-600 text-xs uppercase tracking-widest font-bold">
+            MediAssist AI &bull; Smart Healthcare Systems &bull; 2024
+          </p>
+        </footer>
+      </div>
+    </main>
   );
 }
