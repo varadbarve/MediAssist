@@ -121,6 +121,16 @@ export default function Home() {
                   } else if (key === "Creatinine") {
                     if (num > 1.3) colorClass = "text-red-400";
                     if (num < 0.6) colorClass = "text-yellow-400";
+                  } else if (key === "Sodium") {
+                    if (num < 135 || num > 146) colorClass = "text-yellow-400";
+                  } else if (key === "Potassium") {
+                    if (num < 3.5 || num > 5.1) colorClass = "text-yellow-400";
+                  } else if (key === "ALT_SGPT" || key === "AST_SGOT") {
+                    if (num > 35) colorClass = "text-red-400";
+                  } else if (key === "Bilirubin") {
+                    if (num > 1.2) colorClass = "text-red-400";
+                  } else if (key === "Calcium") {
+                    if (num < 8.8 || num > 10.6) colorClass = "text-yellow-400";
                   }
 
                   return (

@@ -3,9 +3,6 @@ import re
 from typing import Dict
 
 def extract_medical_values_from_pdf(pdf_bytes: bytes) -> Dict:
-    """
-    Enhanced extraction logic to find common medical markers in PDF text.
-    """
     text = ""
     try:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -15,30 +12,32 @@ def extract_medical_values_from_pdf(pdf_bytes: bytes) -> Dict:
         print(f"Error reading PDF: {e}")
         return {}
 
-    # Define common medical markers and their regex patterns
-    # We look for: [Marker Name] [Optional spaces/dots] [The Number]
+    # Comprehensive list for Apollo Reports
     markers = {
         "Hemoglobin": [r"Hemoglobin", r"Hb"],
-        "White_Blood_Cells": [r"WBC", r"White Blood Cells"],
-        "Platelets": [r"Platelets", r"PLT"],
-        "Glucose": [r"Glucose", r"Sugar", r"HbA1c"],
         "Cholesterol": [r"Cholesterol", r"Total Cholesterol"],
-        "Vitamin_D": [r"Vitamin D", r"Vit D", r"25-OH Vitamin D"],
-        "Vitamin_B12": [r"Vitamin B12", r"B12"],
-        "Creatinine": [r"Creatinine"],
-        "Thyroid_TSH": [r"TSH", r"Thyroid Stimulating Hormone"]
+        "Creatinine": [r"CREATININE"],
+        "Vitamin_D": [r"VITAMIN D", r"Vit D"],
+        "Vitamin_B12": [r"VITAMIN B12", r"B12"],
+        "Glucose": [r"Glucose", r"HbA1c", r"Sugar"],
+        "Sodium": [r"SODIUM"],
+        "Potassium": [r"POTASSIUM"],
+        "Bilirubin": [r"BILIRUBIN, TOTAL"],
+        "ALT_SGPT": [r"ALT/SGPT", r"ALANINE AMINOTRANSFERASE"],
+        "AST_SGOT": [r"AST/SGOT", r"ASPARTATE AMINOTRANSFERASE"],
+        "Uric_Acid": [r"URIC ACID"],
+        "Calcium": [r"CALCIUM"]
     }
 
     extracted_data = {}
-
     for label, patterns in markers.items():
         for pattern in patterns:
-            # Regex: Pattern + optional characters like : or - + a number (decimal or int)
-            # Example: "Hemoglobin: 14.5" or "Hb 12"
-            regex = rf"{pattern}\s*[:\-]?\s*(\d+\.?\d*)"
+            # Apollo reports often have the number on the NEXT line
+            # This regex looks for the word followed by some noise, then the number
+            regex = rf"{pattern}[\s\n]*[:\-]?[\s\n]*(\d+\.?\d*)"
             match = re.search(regex, text, re.IGNORECASE)
             if match:
                 extracted_data[label] = match.group(1)
-                break # Found this marker, move to the next one
+                break
 
     return extracted_data
