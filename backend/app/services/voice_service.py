@@ -1,7 +1,8 @@
-import os
 import edge_tts
 import uuid
 import re
+import base64
+import io
 
 def _convert_to_ssml(text: str, voice: str) -> str:
     """
@@ -18,7 +19,6 @@ def _convert_to_ssml(text: str, voice: str) -> str:
                  "Creatinine", "Sodium", "Potassium", "doctor", "urgent",
                  "important", "risk", "healthy", "normal"]
     for word in keywords:
-        # Case-insensitive replacement with emphasis tags
         pattern = re.compile(re.escape(word), re.IGNORECASE)
         text = pattern.sub(f'<emphasis level="moderate">{word}</emphasis>', text)
 
@@ -37,40 +37,43 @@ def _convert_to_ssml(text: str, voice: str) -> str:
 
 async def make_automated_call(phone_number: str, script: str):
     """
-    Generates premium, human-like voice using SSML and Edge-TTS.
+    Generates premium voice and returns it as Base64 — no file storage needed.
     """
     print(f"[LOG] Generating human-like voice for: {phone_number}")
 
-    output_dir = "temp_calls"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    audio_filename = f"call_{uuid.uuid4().hex[:8]}.mp3"
-    file_path = os.path.join(output_dir, audio_filename)
-
-    # One of Microsoft's most natural-sounding neural voices
     voice = "en-US-AvaMultilingualNeural"
+    audio_base64 = None
 
     try:
         ssml_text = _convert_to_ssml(script, voice)
         communicate = edge_tts.Communicate(ssml_text, voice)
-        await communicate.save(file_path)
+        
+        # Collect audio chunks into memory instead of saving to disk
+        audio_buffer = io.BytesIO()
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_buffer.write(chunk["data"])
+        
+        audio_base64 = base64.b64encode(audio_buffer.getvalue()).decode("utf-8")
         status_msg = "Premium voice simulation complete."
     except Exception as e:
         print(f"[ERROR] SSML edge-tts failed: {e}")
         # Fallback: try without SSML
         try:
             communicate = edge_tts.Communicate(script, voice)
-            await communicate.save(file_path)
+            audio_buffer = io.BytesIO()
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    audio_buffer.write(chunk["data"])
+            audio_base64 = base64.b64encode(audio_buffer.getvalue()).decode("utf-8")
             status_msg = "Voice simulation complete."
         except Exception as e2:
             print(f"[ERROR] Fallback also failed: {e2}")
             status_msg = "Audio generation unavailable."
-            audio_filename = None
 
     return {
         "status": "success",
         "mode": "edge_premium_ssml",
-        "audio_file": audio_filename,
+        "audio_base64": audio_base64,
         "message": status_msg
     }

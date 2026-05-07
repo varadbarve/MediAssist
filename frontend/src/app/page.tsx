@@ -256,11 +256,11 @@ export default function Home() {
                           </div>
                         </div>
                         
-                        {result.call_status.audio_file && (
+                        {result.call_status.audio_base64 && (
                           <audio 
                             controls 
                             className="h-10 rounded-full invert hue-rotate-180 brightness-150 opacity-80 hover:opacity-100 transition-opacity"
-                            src={`${API_URL}/temp_calls/${result.call_status.audio_file}`}
+                            src={`data:audio/mp3;base64,${result.call_status.audio_base64}`}
                           />
                         )}
                       </div>
