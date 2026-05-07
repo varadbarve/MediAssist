@@ -231,7 +231,7 @@ export default function Home() {
                     <div className="space-y-6">
                       <div className="space-y-3">
                         <h3 className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Patient Summary</h3>
-                        <div className="p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10 text-zinc-300 leading-relaxed text-lg">
+                        <div className="p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10 text-zinc-300 leading-relaxed text-lg break-words whitespace-pre-wrap overflow-hidden">
                           {result.ai_summary}
                         </div>
                       </div>
@@ -239,7 +239,7 @@ export default function Home() {
                       {result.full_script && (
                         <div className="space-y-3">
                           <h3 className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Automated Call Transcript</h3>
-                          <div className="p-6 rounded-2xl bg-zinc-950/50 border border-zinc-800/50 text-zinc-400 text-sm leading-relaxed font-mono">
+                          <div className="p-6 rounded-2xl bg-zinc-950/50 border border-zinc-800/50 text-zinc-400 text-sm leading-relaxed font-mono break-words whitespace-pre-wrap overflow-hidden">
                             {result.full_script}
                           </div>
                         </div>

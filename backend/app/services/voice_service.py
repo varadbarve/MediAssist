@@ -9,6 +9,13 @@ def _convert_to_ssml(text: str, voice: str) -> str:
     Converts plain text into SSML with natural pauses, 
     a warm speaking rate, and emphasis on key medical terms.
     """
+    # Clean text: remove markdown like ** and escape XML special characters
+    text = text.replace("*", "")
+    text = text.replace("#", "")
+    text = text.replace("&", "&amp;")
+    text = text.replace("<", "&lt;")
+    text = text.replace(">", "&gt;")
+
     # Add pauses after periods and commas for natural breathing
     text = text.replace(". ", '.<break time="600ms"/> ')
     text = text.replace(", ", ',<break time="250ms"/> ')
