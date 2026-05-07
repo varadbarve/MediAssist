@@ -103,12 +103,33 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                {Object.entries(result.extracted_data || {}).map(([key, val]: any) => (
-                  <div key={key} className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50">
-                    <p className="text-xs text-zinc-500 uppercase font-bold tracking-tight">{key}</p>
-                    <p className="text-2xl font-mono text-emerald-400">{val}</p>
-                  </div>
-                ))}
+                {Object.entries(result.extracted_data || {}).map(([key, val]: any) => {
+                  // Reference ranges (simple version)
+                  const num = parseFloat(val);
+                  let colorClass = "text-emerald-400"; // Default green
+                  
+                  if (key === "Hemoglobin") {
+                    if (num < 12) colorClass = "text-yellow-400";
+                    if (num > 18) colorClass = "text-red-400";
+                  } else if (key === "Cholesterol") {
+                    if (num > 200) colorClass = "text-red-400";
+                  } else if (key === "Vitamin_D") {
+                    if (num < 20) colorClass = "text-yellow-400";
+                    if (num > 100) colorClass = "text-red-400";
+                  } else if (key === "Vitamin_B12") {
+                    if (num < 200) colorClass = "text-yellow-400";
+                  } else if (key === "Creatinine") {
+                    if (num > 1.3) colorClass = "text-red-400";
+                    if (num < 0.6) colorClass = "text-yellow-400";
+                  }
+
+                  return (
+                    <div key={key} className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50">
+                      <p className="text-xs text-zinc-500 uppercase font-bold tracking-tight">{key.replace('_', ' ')}</p>
+                      <p className={`text-2xl font-mono font-bold ${colorClass}`}>{val}</p>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="space-y-4">
