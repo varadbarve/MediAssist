@@ -32,7 +32,7 @@ async def upload_and_process_report(
     full_script = f"Hello, this is a message from your clinic regarding your recent report. {summary}. Your doctor has prescribed the following: {prescription_notes}. To repeat this message, press 1. To speak to a staff member, press 3."
 
     # 4. Automated Call Initiated
-    call_result = voice_service.make_automated_call(
+    call_result = await voice_service.make_automated_call(
         phone_number=patient_phone_number, 
         script=full_script
     )
