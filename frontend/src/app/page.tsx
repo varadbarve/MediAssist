@@ -36,10 +36,17 @@ export default function Home() {
         method: "POST",
         body: formData,
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Server error occurred");
+      }
+
       const data = await response.json();
       setResult(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload failed", error);
+      alert("⚠️ Analysis Failed: " + error.message);
     } finally {
       setIsProcessing(false);
     }
