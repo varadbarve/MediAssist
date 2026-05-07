@@ -190,9 +190,9 @@ export default function Home() {
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-6"
                 >
-                  <div className="p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 backdrop-blur-xl">
+                  <div className="p-5 sm:p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 backdrop-blur-xl">
                     <div className="flex items-center justify-between mb-8">
-                      <h2 className="text-2xl font-bold tracking-tight">Analysis Results</h2>
+                      <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Analysis Results</h2>
                       <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-widest border border-emerald-500/20">
                         Completed
                       </span>
@@ -215,12 +215,12 @@ export default function Home() {
                           <motion.div 
                             key={key}
                             variants={itemVariants}
-                            className="p-5 rounded-2xl bg-zinc-950/50 border border-zinc-800/50 group hover:border-blue-500/30 transition-all duration-300"
+                            className="p-4 sm:p-5 rounded-2xl bg-zinc-950/50 border border-zinc-800/50 group hover:border-blue-500/30 transition-all duration-300"
                           >
                             <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-1">
                               {key.replace('_', ' ')}
                             </p>
-                            <p className={`text-3xl font-mono font-bold ${colorClass}`}>
+                            <p className={`text-2xl sm:text-3xl font-mono font-bold ${colorClass}`}>
                               {val}
                             </p>
                           </motion.div>
@@ -231,7 +231,7 @@ export default function Home() {
                     <div className="space-y-6">
                       <div className="space-y-3">
                         <h3 className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Patient Summary</h3>
-                        <div className="p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10 text-zinc-300 leading-relaxed text-lg break-words whitespace-pre-wrap overflow-hidden">
+                        <div className="p-4 sm:p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10 text-zinc-300 leading-relaxed text-base sm:text-lg whitespace-pre-line break-words">
                           {result.ai_summary}
                         </div>
                       </div>
@@ -239,7 +239,7 @@ export default function Home() {
                       {result.full_script && (
                         <div className="space-y-3">
                           <h3 className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Automated Call Transcript</h3>
-                          <div className="p-6 rounded-2xl bg-zinc-950/50 border border-zinc-800/50 text-zinc-400 text-sm leading-relaxed font-mono break-words whitespace-pre-wrap overflow-hidden">
+                          <div className="p-4 sm:p-6 rounded-2xl bg-zinc-950/50 border border-zinc-800/50 text-zinc-400 text-xs sm:text-sm leading-relaxed font-mono whitespace-pre-line break-words">
                             {result.full_script}
                           </div>
                         </div>
