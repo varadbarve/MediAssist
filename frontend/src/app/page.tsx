@@ -154,9 +154,14 @@ export default function Home() {
               </div>
 
               <button 
-                onClick={handleUpload}
+                type="button"
+                id="analyze-button"
+                onClick={() => {
+                  console.log("Analyze button clicked!");
+                  handleUpload();
+                }}
                 disabled={!file || isProcessing}
-                className="w-full mt-8 py-4 px-6 rounded-2xl bg-white text-black font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                className="w-full mt-8 py-4 px-6 rounded-2xl bg-white text-black font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed transition-all active:scale-[0.98] cursor-pointer"
               >
                 {isProcessing ? (
                   <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
