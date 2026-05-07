@@ -100,14 +100,9 @@ export default function Home() {
 
         <div className="grid lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Upload */}
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="lg:col-span-5 space-y-6"
-          >
+          <div className="lg:col-span-5 space-y-6 relative">
             <div className="group relative p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-all duration-500 backdrop-blur-xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl pointer-events-none" />
               
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-blue-400" />
@@ -118,11 +113,6 @@ export default function Home() {
                 className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
                   file ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-zinc-800 hover:border-blue-500/50 bg-zinc-950/50'
                 }`}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
-                }}
               >
                 <input 
                   type="file" 
@@ -161,7 +151,7 @@ export default function Home() {
                   handleUpload();
                 }}
                 disabled={!file || isProcessing}
-                className="w-full mt-8 py-4 px-6 rounded-2xl bg-white text-black font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed transition-all active:scale-[0.98] cursor-pointer"
+                className="w-full mt-8 py-4 px-6 rounded-2xl bg-white text-black font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed transition-all active:scale-[0.98] cursor-pointer relative z-50"
               >
                 {isProcessing ? (
                   <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
@@ -187,7 +177,7 @@ export default function Home() {
                 <p className="text-sm text-zinc-300">HIPAA Compliant</p>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Right Column: Results */}
           <div className="lg:col-span-7">
