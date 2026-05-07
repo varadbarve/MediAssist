@@ -126,20 +126,29 @@ export default function Home() {
               >
                 <input 
                   type="file" 
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  id="file-upload"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" 
+                  onChange={(e) => {
+                    const selectedFile = e.target.files?.[0] || null;
+                    console.log("File selected:", selectedFile);
+                    setFile(selectedFile);
+                  }}
                   accept=".pdf"
                 />
                 
-                <div className="space-y-4">
-                  <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto border border-zinc-800 group-hover:scale-110 transition-transform duration-500">
+                <div className="space-y-4 relative z-10">
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto border transition-all duration-500 ${
+                    file ? 'bg-emerald-500/20 border-emerald-500/50 scale-110' : 'bg-zinc-900 border-zinc-800'
+                  }`}>
                     {file ? <CheckCircle2 className="w-8 h-8 text-emerald-400" /> : <Upload className="w-8 h-8 text-blue-400" />}
                   </div>
                   <div>
-                    <p className="font-bold text-zinc-200">
+                    <p className={`font-bold transition-colors ${file ? 'text-emerald-400' : 'text-zinc-200'}`}>
                       {file ? file.name : "Select your PDF report"}
                     </p>
-                    <p className="text-sm text-zinc-500 mt-1">Drag and drop or click to browse</p>
+                    <p className="text-sm text-zinc-500 mt-1">
+                      {file ? "File ready for analysis" : "Drag and drop or click to browse"}
+                    </p>
                   </div>
                 </div>
               </div>
