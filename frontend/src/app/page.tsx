@@ -180,7 +180,7 @@ export default function Home() {
           </div>
 
           {/* Right Column: Results */}
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7 min-w-0 w-full">
             <AnimatePresence mode="wait">
               {result ? (
                 <motion.div 
@@ -188,9 +188,9 @@ export default function Home() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="space-y-6"
+                  className="space-y-6 min-w-0 w-full"
                 >
-                  <div className="p-5 sm:p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 backdrop-blur-xl">
+                  <div className="p-5 sm:p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 backdrop-blur-xl w-full overflow-hidden">
                     <div className="flex items-center justify-between mb-8">
                       <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Analysis Results</h2>
                       <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-widest border border-emerald-500/20">
@@ -229,17 +229,17 @@ export default function Home() {
                     </div>
 
                     <div className="space-y-6">
-                      <div className="space-y-3">
+                      <div className="space-y-3 w-full">
                         <h3 className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Patient Summary</h3>
-                        <div className="p-4 sm:p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10 text-zinc-300 leading-relaxed text-base sm:text-lg whitespace-pre-line break-words">
+                        <div className="p-4 sm:p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10 text-zinc-300 leading-relaxed text-base sm:text-lg whitespace-pre-line break-words w-full">
                           {result.ai_summary}
                         </div>
                       </div>
 
                       {result.full_script && (
-                        <div className="space-y-3">
+                        <div className="space-y-3 w-full">
                           <h3 className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em]">Automated Call Transcript</h3>
-                          <div className="p-4 sm:p-6 rounded-2xl bg-zinc-950/50 border border-zinc-800/50 text-zinc-400 text-xs sm:text-sm leading-relaxed font-mono whitespace-pre-line break-words">
+                          <div className="p-4 sm:p-6 rounded-2xl bg-zinc-950/50 border border-zinc-800/50 text-zinc-400 text-xs sm:text-sm leading-relaxed font-mono whitespace-pre-line break-words w-full">
                             {result.full_script}
                           </div>
                         </div>
