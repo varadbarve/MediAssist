@@ -163,3 +163,5 @@ backend/mediassist.db
 backend/temp_calls/
 backend/.env
 frontend/.env
+frontend/CLAUDE.md
+frontend/AGENTS.md
