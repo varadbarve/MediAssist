@@ -151,6 +151,16 @@ export default function Home() {
                 </div>
               </div>
 
+              {result.full_script && (
+                <div className="mt-8 space-y-4">
+                  <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Telephonic Transcript</h3>
+                  <div className="p-6 rounded-xl bg-zinc-800/30 border border-zinc-700/30 text-zinc-400 text-sm leading-relaxed">
+                    <p className="font-mono text-xs mb-2 text-zinc-500 uppercase tracking-tighter">[Automated Outbound Script]</p>
+                    {result.full_script}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-8 pt-8 border-t border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4 text-sm text-zinc-500">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
