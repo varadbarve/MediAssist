@@ -109,15 +109,17 @@ export default function Home() {
                   let colorClass = "text-emerald-400"; // Default green
                   
                   if (key === "Hemoglobin") {
-                    if (num < 12) colorClass = "text-yellow-400";
-                    if (num > 18) colorClass = "text-red-400";
+                    if (num < 10) colorClass = "text-red-400";
+                    else if (num < 12) colorClass = "text-yellow-400";
+                    else if (num > 18) colorClass = "text-red-400";
                   } else if (key === "Cholesterol") {
                     if (num > 200) colorClass = "text-red-400";
                   } else if (key === "Vitamin_D") {
                     if (num < 20) colorClass = "text-yellow-400";
                     if (num > 100) colorClass = "text-red-400";
                   } else if (key === "Vitamin_B12") {
-                    if (num < 200) colorClass = "text-yellow-400";
+                    if (num < 100) colorClass = "text-red-400";
+                    else if (num < 200) colorClass = "text-yellow-400";
                   } else if (key === "Creatinine") {
                     if (num > 1.3) colorClass = "text-red-400";
                     if (num < 0.6) colorClass = "text-yellow-400";

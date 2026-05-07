@@ -7,21 +7,21 @@ if GEMINI_API_KEY:
 
 def generate_patient_summary(extracted_data: Dict) -> str:
     if not extracted_data:
-        return "Your report has been received. Our analysis indicates no critical biomarkers were extracted. Please consult your doctor."
+        return "No specific data found."
 
-    # Force detail in the prompt for Gemini
     prompt = f"""
     You are 'MediAssist', a compassionate AI medical assistant. 
-    Analyze these lab results and write exactly 8-10 sentences.
+    Analyze these lab results and write 8-10 sentences.
     
     Results: {extracted_data}
     
-    1. Start with a warm greeting.
-    2. Group results (e.g., mention Liver, Kidney, or Vitamins together).
-    3. Explain every single number in plain English.
-    4. For any high/low value, give a specific healthy lifestyle tip.
-    5. Mention that these are automated insights and require a doctor's review.
-    6. Maintain a reassuring and professional tone.
+    CRITICAL INSTRUCTIONS:
+    1. POSITIVE REINFORCEMENT: Start by highlighting all the NORMAL (Green) results. Congratulate the patient on these.
+    2. RISK ASSESSMENT: After the good news, identify any HIGH RISK or DANGEROUS values. Explain why they are important.
+    3. TONE: Be reassuring, clear, and empathetic.
+    4. LANGUAGE: Provide the response in the SAME language as the uploaded report.
+    5. CALL TO ACTION: Suggest a specific healthy tip for the risks and insist on a doctor visit.
+    6. DISCLAIMER: State that this is an AI summary and not a final diagnosis.
     """
 
     try:
@@ -30,24 +30,29 @@ def generate_patient_summary(extracted_data: Dict) -> str:
         return response.text.strip()
     except Exception as e:
         print(f"[ERROR] Gemini API failed: {e}")
-        return _generate_detailed_fallback(extracted_data)
+        return _generate_mental_health_fallback(extracted_data)
 
-def _generate_detailed_fallback(data: Dict) -> str:
-    """A high-quality, 10-sentence fallback for when the API is down."""
-    summary = "Hello! I am your MediAssist AI, and I have carefully reviewed your lab results. "
-    summary += "Looking at your metabolic health, we noticed several key indicators. "
+def _generate_mental_health_fallback(data: Dict) -> str:
+    """A detailed fallback that prioritizes mental well-being and risk awareness."""
+    summary = "Hello! I am your MediAssist assistant. First, the good news: many of your levels look stable and healthy. "
     
-    parts = []
-    for key, val in data.items():
-        parts.append(f"your {key.replace('_', ' ')} which is {val}")
+    # Simple logic to group good vs bad for the fallback
+    good = []
+    risks = []
+    for k, v in data.items():
+        val = float(v)
+        if k == "Hemoglobin" and val < 10: risks.append("Hemoglobin (Very Low)")
+        elif k == "Cholesterol" and val > 200: risks.append("Cholesterol (High)")
+        elif k == "Vitamin_D" and val < 20: risks.append("Vitamin D (Low)")
+        elif k == "Vitamin_B12" and val < 150: risks.append("Vitamin B12 (Very Low)")
+        else: good.append(k.replace('_', ' '))
+
+    if good:
+        summary += f"We are happy to see that your {', '.join(good)} are within expected ranges. This is a great sign of overall health! "
     
-    summary += "Your report includes " + ", ".join(parts) + ". "
-    summary += "Specifically, your electrolyte levels (Sodium and Potassium) help us understand your body's hydration and nerve function. "
-    summary += "Your liver and kidney markers like ALT and Creatinine help monitor how your body processes nutrients and filters waste. "
-    summary += "If you see any yellow or red highlights in the table above, it may indicate a value outside the typical range. "
-    summary += "We recommend maintaining a balanced diet rich in leafy greens and staying well-hydrated to support these levels. "
-    summary += "Please take a moment to download this summary and discuss it with your healthcare provider. "
-    summary += "They can provide a personalized clinical diagnosis based on your full medical history. "
-    summary += "We are here to support your health journey!"
+    if risks:
+        summary += f"However, we noticed that your {', '.join(risks)} require closer attention. These are important markers for your energy and heart health. "
+        summary += "We strongly recommend scheduling a follow-up with your doctor this week to discuss these specific values. "
     
+    summary += "In the meantime, focus on a balanced diet and rest. Remember, this is just an automated summary to help you prepare for your doctor's visit. Stay positive!"
     return summary
