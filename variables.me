@@ -1,0 +1,63 @@
+# Project Variables - MediAssist AI
+
+This file lists the variables used across the project, categorized by type and location.
+
+## Environment Variables (.env)
+- GEMINI_API_KEY
+- DATABASE_URL
+- TWILIO_ACCOUNT_SID
+- TWILIO_AUTH_TOKEN
+- TWILIO_PHONE_NUMBER
+
+## Configuration Variables (backend/app/core/config.py)
+- OPENAI_API_KEY
+- TWILIO_ACCOUNT_SID
+- TWILIO_AUTH_TOKEN
+- TWILIO_PHONE_NUMBER
+- GEMINI_API_KEY
+- DATABASE_URL
+- PROJECT_NAME
+- API_V1_STR
+
+## Backend Variables (by file)
+
+### backend/main.py
+- app (FastAPI instance)
+
+### backend/app/services/voice_service.py
+- _clean_text_for_speech: text
+- make_automated_call: phone_number, script, voice, audio_base64, clean_script, communicate, audio_buffer, audio_bytes, status_msg
+
+### backend/app/services/ai_summarization.py
+- generate_patient_summary: extracted_data, prompt, models_to_try, model_name, model, response
+- _generate_mental_health_fallback: data, summary, good, risks, reference_ranges, k, v, clean_name, val, ref
+
+### backend/app/services/report_processing.py
+- extract_medical_values_from_pdf: pdf_bytes, text, doc, page, markers, extracted_data, label, patterns, pattern, regex, match
+
+### backend/app/api/v1/endpoints/calls.py
+- handle_voice_webhook: From, Digits, twiml_response
+
+### backend/app/api/v1/endpoints/reports.py
+- upload_and_process_report: patient_id, patient_phone_number, file, file_content, extracted_data, summary, prescription_notes, full_script, call_result
+
+## Frontend Variables
+
+### frontend/src/app/page.tsx
+- file (State)
+- setFile (State Dispatch)
+- isProcessing (State)
+- setIsProcessing (State Dispatch)
+- result (State)
+- setResult (State Dispatch)
+- API_URL (Constant)
+- handleUpload (Function)
+- formData (Local)
+- response (Local)
+- errorData (Local)
+- data (Local)
+- error (Local)
+- containerVariants (Constant)
+- itemVariants (Constant)
+- num (Local)
+- colorClass (Local)
