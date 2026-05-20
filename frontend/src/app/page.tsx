@@ -105,6 +105,185 @@ export default function Home() {
     );
   }
 
+  // --- Layer 9: Conditional Patient Portal View ---
+  if (user?.role === "patient") {
+    return (
+      <main className="min-h-screen bg-[#09090b] text-zinc-100 relative overflow-hidden pb-12">
+        {/* Background Glow */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] bg-emerald-600/5 blur-[150px] rounded-full" />
+          <div className="absolute bottom-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-600/5 blur-[150px] rounded-full" />
+        </div>
+
+        <div className="max-w-6xl mx-auto px-6 py-12 relative z-10">
+          {/* Header */}
+          <header className="pb-8 mb-12 border-b border-zinc-900">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 border border-emerald-500/30 flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Patient Portal</p>
+                  <p className="text-sm font-bold text-zinc-300">{user?.full_name}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                  <Shield className="w-3 h-3" />
+                  Secure Access
+                </div>
+                <button
+                  onClick={logout}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-800 text-zinc-500 text-xs font-bold hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all"
+                >
+                  <LogOut className="w-3 h-3" />
+                  Logout
+                </button>
+              </div>
+            </div>
+
+            <div className="text-center mt-12">
+              <h1 className="text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-b from-white to-zinc-500 bg-clip-text text-transparent mb-4">
+                Welcome to MediAssist
+              </h1>
+              <p className="text-zinc-500 text-base max-w-xl mx-auto">
+                Your personal health dashboard for reviewing report summaries, prescriptions, and outbound voice follow-ups.
+              </p>
+            </div>
+          </header>
+
+          {/* 2x2 Balanced Grid */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Card 1: My Health Records */}
+            <div className="p-8 rounded-3xl bg-zinc-900/40 border border-zinc-800 backdrop-blur-xl relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <FileText className="w-24 h-24 text-emerald-400" />
+              </div>
+              <h3 className="text-lg font-bold text-zinc-200 mb-6 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-emerald-400" />
+                Latest Health Indicators
+              </h3>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-4 rounded-xl bg-zinc-950/40 border border-zinc-800/60">
+                  <span className="text-sm text-zinc-400 font-medium">Hemoglobin</span>
+                  <span className="text-lg font-mono font-bold text-emerald-400">13.5 g/dL</span>
+                </div>
+                <div className="flex justify-between items-center p-4 rounded-xl bg-zinc-950/40 border border-zinc-800/60">
+                  <span className="text-sm text-zinc-400 font-medium">Cholesterol</span>
+                  <span className="text-lg font-mono font-bold text-emerald-400">180 mg/dL</span>
+                </div>
+                <div className="flex justify-between items-center p-4 rounded-xl bg-zinc-950/40 border border-zinc-800/60">
+                  <span className="text-sm text-zinc-400 font-medium">Vitamin D3</span>
+                  <span className="text-lg font-mono font-bold text-emerald-400">32.0 ng/mL</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold mt-6 text-center">
+                Last checked: Today &bull; Status: Healthy
+              </p>
+            </div>
+
+            {/* Card 2: Active Prescriptions */}
+            <div className="p-8 rounded-3xl bg-zinc-900/40 border border-zinc-800 backdrop-blur-xl relative overflow-hidden group hover:border-blue-500/30 transition-all duration-300">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <Activity className="w-24 h-24 text-blue-400" />
+              </div>
+              <h3 className="text-lg font-bold text-zinc-200 mb-6 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-blue-400" />
+                Active Prescriptions
+              </h3>
+
+              <div className="p-5 rounded-2xl bg-blue-500/5 border border-blue-500/10 text-zinc-300 text-sm leading-relaxed mb-6">
+                Take 1 Vitamin D3 pill daily after breakfast. Ensure you drink plenty of water throughout the day.
+              </div>
+
+              <div className="space-y-2 text-xs text-zinc-500 font-medium">
+                <div className="flex justify-between">
+                  <span>Prescribing Clinician:</span>
+                  <span className="text-zinc-300 font-bold">Dr. Jane Smith</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Dosage Timing:</span>
+                  <span className="text-zinc-300 font-bold">Daily (After Meals)</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold mt-6 text-center">
+                Active Status: Verified
+              </p>
+            </div>
+
+            {/* Card 3: Voice Call Follow-Up */}
+            <div className="p-8 rounded-3xl bg-zinc-900/40 border border-zinc-800 backdrop-blur-xl relative overflow-hidden group hover:border-purple-500/30 transition-all duration-300">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <Phone className="w-24 h-24 text-purple-400" />
+              </div>
+              <h3 className="text-lg font-bold text-zinc-200 mb-6 flex items-center gap-2">
+                <Phone className="w-5 h-5 text-purple-400" />
+                AI Voice Follow-Up
+              </h3>
+
+              <div className="space-y-4 mb-6">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-zinc-500 font-bold uppercase">Simulation Status:</span>
+                  <span className="px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-bold uppercase">
+                    Completed
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-zinc-500 font-bold uppercase">Call Timestamp:</span>
+                  <span className="text-zinc-300 text-xs font-mono font-bold">Today, 7:56 PM</span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800/60 text-xs text-zinc-400 leading-relaxed font-mono mb-4">
+                "Hello, this is a message from your clinic regarding your recent report. Many of your levels look stable and healthy. Your doctor has prescribed..."
+              </div>
+
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold mt-2 text-center">
+                Interactive voice support is fully operational
+              </p>
+            </div>
+
+            {/* Card 4: Support & Escalation */}
+            <div className="p-8 rounded-3xl bg-zinc-900/40 border border-zinc-800 backdrop-blur-xl relative overflow-hidden group hover:border-yellow-500/30 transition-all duration-300">
+              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                <Stethoscope className="w-24 h-24 text-yellow-400" />
+              </div>
+              <h3 className="text-lg font-bold text-zinc-200 mb-6 flex items-center gap-2">
+                <Stethoscope className="w-5 h-5 text-yellow-400" />
+                Clinic Support
+              </h3>
+
+              <p className="text-zinc-400 text-sm leading-relaxed mb-6">
+                Need to speak with a human clinician or change your prescription? Request a callback directly below.
+              </p>
+
+              <button 
+                onClick={() => alert("Clinic notified! A staff member will call you shortly.")}
+                className="w-full py-3 px-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 font-bold text-sm hover:bg-yellow-500/20 transition-all active:scale-[0.98]"
+              >
+                Request Doctor Callback
+              </button>
+
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold mt-6 text-center">
+                Typical response time: &lt;15 mins
+              </p>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <footer className="mt-20 pt-8 border-t border-zinc-900 text-center">
+            <p className="text-zinc-600 text-xs uppercase tracking-widest font-bold">
+              MediAssist AI &bull; Smart Healthcare Systems &bull; 2026
+            </p>
+          </footer>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-blue-500/30 overflow-x-hidden">
       {/* Background Glow */}
