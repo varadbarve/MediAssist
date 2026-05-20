@@ -19,6 +19,8 @@ from app.db.session import SessionLocal, engine
 from app.models.patient import Patient
 from app.models.user import User
 from app.models.audit_log import AuditLog
+from app.models.report import Report
+from app.models.prescription import Prescription
 
 class TestMediAssistSecurity(unittest.TestCase):
 
@@ -102,7 +104,8 @@ class TestMediAssistSecurity(unittest.TestCase):
         pdf_file = io.BytesIO(b"%PDF-1.4\n%mock pdf content")
         data = {
             "patient_id": "PAT-12345",
-            "patient_phone_number": "12345"  # Should be E.164 format
+            "patient_phone_number": "12345",  # Should be E.164 format
+            "prescription_notes": "Take Vitamin D daily."
         }
         files = {"file": ("report.pdf", pdf_file, "application/pdf")}
         response = self.client.post("/api/v1/reports/upload", headers=headers, data=data, files=files)
@@ -113,7 +116,8 @@ class TestMediAssistSecurity(unittest.TestCase):
         pdf_file = io.BytesIO(b"%PDF-1.4\n%mock pdf content")
         data = {
             "patient_id": "PATIENT_ID_WITH_SPECIAL_CHARS!@#",
-            "patient_phone_number": "+919876543210"
+            "patient_phone_number": "+919876543210",
+            "prescription_notes": "Take Vitamin D daily."
         }
         files = {"file": ("report.pdf", pdf_file, "application/pdf")}
         response = self.client.post("/api/v1/reports/upload", headers=headers, data=data, files=files)
@@ -124,7 +128,8 @@ class TestMediAssistSecurity(unittest.TestCase):
         text_file = io.BytesIO(b"some plain text")
         data = {
             "patient_id": "PAT-12345",
-            "patient_phone_number": "+919876543210"
+            "patient_phone_number": "+919876543210",
+            "prescription_notes": "Take Vitamin D daily."
         }
         files = {"file": ("report.txt", text_file, "text/plain")}
         response = self.client.post("/api/v1/reports/upload", headers=headers, data=data, files=files)
@@ -135,7 +140,8 @@ class TestMediAssistSecurity(unittest.TestCase):
         fake_pdf = io.BytesIO(b"NOT_A_PDF_content")
         data = {
             "patient_id": "PAT-12345",
-            "patient_phone_number": "+919876543210"
+            "patient_phone_number": "+919876543210",
+            "prescription_notes": "Take Vitamin D daily."
         }
         files = {"file": ("report.pdf", fake_pdf, "application/pdf")}
         response = self.client.post("/api/v1/reports/upload", headers=headers, data=data, files=files)
@@ -222,6 +228,60 @@ class TestMediAssistSecurity(unittest.TestCase):
             time.sleep(0.01) # Rapid calls
 
         self.assertTrue(throttled, "Rate limiting did not trigger HTTP 429 after 10 requests")
+
+    def test_08_database_persistence(self):
+        print("\n--- Testing Database Persistence of Patient & Clinical Records ---")
+        headers = {"Authorization": f"Bearer {self.token}"}
+        
+        # Upload valid report
+        import uuid
+        import fitz
+        test_pat_id = f"PAT-TEST-{uuid.uuid4().hex[:6]}"
+        test_notes = "Take 1 Vitamin D pill daily."
+        
+        # Generate a valid PDF stream in memory using fitz
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((50, 50), "Hemoglobin 13.5")
+        page.insert_text((50, 70), "Cholesterol 180")
+        page.insert_text((50, 90), "Vitamin D 32")
+        pdf_bytes = doc.write()
+        doc.close()
+        
+        pdf_file = io.BytesIO(pdf_bytes)
+        data = {
+            "patient_id": test_pat_id,
+            "patient_phone_number": "+919876543210",
+            "prescription_notes": test_notes
+        }
+        files = {"file": ("report.pdf", pdf_file, "application/pdf")}
+        
+        response = self.client.post("/api/v1/reports/upload", headers=headers, data=data, files=files)
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify db persistence
+        db_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, test_pat_id)
+        
+        patient_rec = self.db.query(Patient).filter(Patient.patient_id == db_uuid).first()
+        self.assertIsNotNone(patient_rec)
+        self.assertEqual(patient_rec.get_phone(), "+919876543210")
+        
+        report_rec = self.db.query(Report).filter(Report.patient_id == db_uuid).order_by(Report.report_id.desc()).first()
+        self.assertIsNotNone(report_rec)
+        self.assertEqual(report_rec.hemoglobin, 13.5)
+        self.assertEqual(report_rec.cholesterol, 180.0)
+        self.assertEqual(report_rec.vitamin_d, 32.0)
+        
+        prescription_rec = self.db.query(Prescription).filter(Prescription.patient_id == db_uuid).order_by(Prescription.prescription_id.desc()).first()
+        self.assertIsNotNone(prescription_rec)
+        self.assertEqual(prescription_rec.medicine_name, test_notes)
+        
+        # Clean up
+        self.db.delete(prescription_rec)
+        self.db.delete(report_rec)
+        self.db.delete(patient_rec)
+        self.db.commit()
+        print("Database persistence, extraction mapping, and encryption verified successfully!")
 
 if __name__ == "__main__":
     unittest.main()
