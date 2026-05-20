@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Float, ForeignKey, UUID
+from sqlalchemy import Column, Float, ForeignKey, UUID, String
 from sqlalchemy.orm import relationship
 import uuid
 from app.db.base_class import Base
@@ -9,5 +9,6 @@ class Report(Base):
     hemoglobin = Column(Float)
     cholesterol = Column(Float)
     vitamin_d = Column(Float)
+    status = Column(String, default="pending_review", nullable=False)
 
     patient = relationship("Patient", back_populates="reports")

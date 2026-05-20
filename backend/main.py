@@ -16,6 +16,16 @@ from app.core.security_headers import SecurityHeadersMiddleware
 # Create database tables (including new User and AuditLog tables)
 Base.metadata.create_all(bind=engine)
 
+# Run raw migrations to add status column if it does not exist
+from sqlalchemy import text
+with engine.connect() as conn:
+    try:
+        conn.execute(text("ALTER TABLE report ADD COLUMN status VARCHAR DEFAULT 'pending_review'"))
+        conn.commit()
+        print("[DATABASE migration] Added status column to report table successfully.")
+    except Exception as e:
+        pass
+
 app = FastAPI(
     title=PROJECT_NAME,
     docs_url="/docs",  # Swagger UI

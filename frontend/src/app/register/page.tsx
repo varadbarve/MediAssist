@@ -42,6 +42,7 @@ export default function RegisterPage() {
   const roles = [
     { value: "patient", label: "Patient", description: "Personal access" },
     { value: "staff", label: "Staff", description: "General access" },
+    { value: "intern", label: "Medical Intern", description: "Supervised access" },
     { value: "doctor", label: "Doctor", description: "Clinical access" },
     { value: "admin", label: "Admin", description: "Full access" },
   ];

@@ -108,11 +108,15 @@ async def upload_and_process_report(
             except ValueError:
                 pass
 
+        is_intern = (current_user.role == "intern")
+        initial_status = "pending_cosignature" if is_intern else "completed"
+
         db_report = Report(
             patient_id=uuid_id,
             hemoglobin=hemoglobin_val,
             cholesterol=cholesterol_val,
-            vitamin_d=vitamin_d_val
+            vitamin_d=vitamin_d_val,
+            status=initial_status
         )
         db.add(db_report)
         db.flush()
@@ -142,6 +146,23 @@ async def upload_and_process_report(
     print(full_script)
     print("=" * 50 + "\n")
 
+    if is_intern:
+        log_event(
+            event_type="REPORT_UPLOAD",
+            action="queued_for_cosignature",
+            ip_address=client_ip,
+            patient_id=patient_id,
+            user_email=current_user.email,
+            details="Report saved as pending_cosignature"
+        )
+        return {
+            "filename": file.filename,
+            "extracted_data": extracted_data,
+            "ai_summary": summary,
+            "full_script": full_script,
+            "call_status": {"status": "pending_cosignature", "message": "Queued for Doctor Co-signature"}
+        }
+
     # 4. Automated Call Initiated
     call_result = await voice_service.make_automated_call(
         phone_number=patient_phone_number,
@@ -164,3 +185,115 @@ async def upload_and_process_report(
         "full_script": full_script,
         "call_status": call_result
     }
+
+
+from pydantic import BaseModel
+from typing import List
+
+class CosignRequest(BaseModel):
+    report_ids: List[str]
+
+
+@router.get("/pending-cosignature")
+async def get_pending_cosignature_reports(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all reports that are pending doctor co-signature.
+    """
+    if current_user.role not in ["doctor", "admin"]:
+        raise HTTPException(status_code=403, detail="Only doctors and admins can access this queue.")
+        
+    reports = db.query(Report).filter(Report.status == "pending_cosignature").all()
+    results = []
+    for r in reports:
+        patient = db.query(Patient).filter(Patient.patient_id == r.patient_id).first()
+        prescription = db.query(Prescription).filter(Prescription.patient_id == r.patient_id).order_by(Prescription.prescription_id.desc()).first()
+        
+        results.append({
+            "report_id": str(r.report_id),
+            "patient_id": str(r.patient_id),
+            "patient_phone": patient.get_phone() if patient else "",
+            "hemoglobin": r.hemoglobin,
+            "cholesterol": r.cholesterol,
+            "vitamin_d": r.vitamin_d,
+            "prescription_notes": prescription.medicine_name if prescription else "",
+            "status": r.status
+        })
+    return results
+
+
+@router.post("/cosign")
+async def cosign_reports(
+    payload: CosignRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Bulk co-sign reports and trigger the automated outbound calls.
+    """
+    if current_user.role not in ["doctor", "admin"]:
+        raise HTTPException(status_code=403, detail="Only doctors and admins can co-sign reports.")
+        
+    results = []
+    for r_id in payload.report_ids:
+        try:
+            report_uuid = uuid.UUID(r_id)
+        except ValueError:
+            continue
+            
+        r = db.query(Report).filter(Report.report_id == report_uuid).first()
+        if not r:
+            continue
+            
+        if r.status != "pending_cosignature":
+            continue
+            
+        # Retrieve patient and prescription
+        patient = db.query(Patient).filter(Patient.patient_id == r.patient_id).first()
+        prescription = db.query(Prescription).filter(Prescription.patient_id == r.patient_id).order_by(Prescription.prescription_id.desc()).first()
+        
+        phone_number = patient.get_phone() if patient else ""
+        prescription_notes = prescription.medicine_name if prescription else ""
+        
+        # Build AI Summary
+        markers = {}
+        if r.hemoglobin is not None:
+            markers["Hemoglobin"] = str(r.hemoglobin)
+        if r.cholesterol is not None:
+            markers["Cholesterol"] = str(r.cholesterol)
+        if r.vitamin_d is not None:
+            markers["Vitamin_D"] = str(r.vitamin_d)
+            
+        summary = ai_summarization.generate_patient_summary(markers)
+        full_script = f"Hello, this is a message from your clinic regarding your recent report. {summary}. Your doctor has prescribed the following: {prescription_notes}. To repeat this message, press 1. To speak to a staff member, press 3."
+        
+        # Trigger the automated call
+        call_result = await voice_service.make_automated_call(
+            phone_number=phone_number,
+            script=full_script
+        )
+        
+        # Mark as completed
+        r.status = "completed"
+        db.add(r)
+        
+        # Log the event
+        log_event(
+            event_type="CALL",
+            action="call_initiated_cosigned",
+            ip_address="system",
+            patient_id=str(r.patient_id),
+            user_email=current_user.email,
+            details=f"Co-signed report: {r_id}, Phone: ***{phone_number[-4:]}, Status: {call_result.get('status', 'unknown')}"
+        )
+        
+        results.append({
+            "report_id": r_id,
+            "status": "completed",
+            "call_status": call_result
+        })
+        
+    db.commit()
+    return {"results": results}

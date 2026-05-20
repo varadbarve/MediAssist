@@ -283,5 +283,105 @@ class TestMediAssistSecurity(unittest.TestCase):
         self.db.commit()
         print("Database persistence, extraction mapping, and encryption verified successfully!")
 
+    def test_09_intern_cosignature_flow(self):
+        print("\n--- Testing Medical Intern & Doctor Co-signature Flow ---")
+        # Temporarily disable rate limiting for this test to avoid 429 from previous tests
+        from app.core.rate_limiter import limiter
+        limiter.enabled = False
+
+        # Clean up existing intern user if left over from a previous failed run
+        existing_intern = self.db.query(User).filter(User.email == "intern_test@test.com").first()
+        if existing_intern:
+            self.db.delete(existing_intern)
+            self.db.commit()
+
+        # 1. Register intern
+        register_data = {
+            "email": "intern_test@test.com",
+            "password": "testpassword123",
+            "full_name": "Dr. Intern",
+            "role": "intern"
+        }
+        resp = self.client.post("/api/v1/auth/register", json=register_data)
+        self.assertEqual(resp.status_code, 201)
+
+        # Log in as intern to get token
+        login_data = {
+            "email": "intern_test@test.com",
+            "password": "testpassword123"
+        }
+        resp_login = self.client.post("/api/v1/auth/login", json=login_data)
+        self.assertEqual(resp_login.status_code, 200)
+        intern_token = resp_login.json()["access_token"]
+        intern_headers = {"Authorization": f"Bearer {intern_token}"}
+
+        # 2. Upload report as intern
+        import uuid
+        import fitz
+        test_pat_id = f"PAT-INT-{uuid.uuid4().hex[:6]}"
+        test_notes = "Daily Vitamin D."
+        
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((50, 50), "Hemoglobin 13.5")
+        page.insert_text((50, 70), "Cholesterol 180")
+        page.insert_text((50, 90), "Vitamin D 32")
+        pdf_bytes = doc.write()
+        doc.close()
+        
+        pdf_file = io.BytesIO(pdf_bytes)
+        data = {
+            "patient_id": test_pat_id,
+            "patient_phone_number": "+919876543210",
+            "prescription_notes": test_notes
+        }
+        files = {"file": ("report_intern.pdf", pdf_file, "application/pdf")}
+        
+        response = self.client.post("/api/v1/reports/upload", headers=intern_headers, data=data, files=files)
+        self.assertEqual(response.status_code, 200)
+        resp_json = response.json()
+        self.assertEqual(resp_json["call_status"]["status"], "pending_cosignature")
+
+        # 3. Check report status in DB
+        db_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, test_pat_id)
+        report_rec = self.db.query(Report).filter(Report.patient_id == db_uuid).first()
+        self.assertIsNotNone(report_rec)
+        self.assertEqual(report_rec.status, "pending_cosignature")
+
+        # 4. Fetch pending queue as doctor
+        doctor_headers = {"Authorization": f"Bearer {self.token}"}
+        resp_queue = self.client.get("/api/v1/reports/pending-cosignature", headers=doctor_headers)
+        self.assertEqual(resp_queue.status_code, 200)
+        queue_list = resp_queue.json()
+        self.assertTrue(any(item["report_id"] == str(report_rec.report_id) for item in queue_list))
+
+        # 5. Doctor co-signs report
+        cosign_payload = {"report_ids": [str(report_rec.report_id)]}
+        resp_cosign = self.client.post("/api/v1/reports/cosign", headers=doctor_headers, json=cosign_payload)
+        self.assertEqual(resp_cosign.status_code, 200)
+
+        # 6. Verify status updated to completed in DB
+        self.db.refresh(report_rec)
+        self.assertEqual(report_rec.status, "completed")
+
+        # Clean up
+        patient_rec = self.db.query(Patient).filter(Patient.patient_id == db_uuid).first()
+        prescription_rec = self.db.query(Prescription).filter(Prescription.patient_id == db_uuid).first()
+        if prescription_rec:
+            self.db.delete(prescription_rec)
+        if report_rec:
+            self.db.delete(report_rec)
+        if patient_rec:
+            self.db.delete(patient_rec)
+            
+        intern_user = self.db.query(User).filter(User.email == "intern_test@test.com").first()
+        if intern_user:
+            self.db.delete(intern_user)
+        self.db.commit()
+        
+        # Restore rate limiting
+        limiter.enabled = True
+        print("Medical Intern verification and Attending Doctor co-signature flows verified successfully!")
+
 if __name__ == "__main__":
     unittest.main()

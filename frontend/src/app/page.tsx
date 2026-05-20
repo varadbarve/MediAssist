@@ -29,7 +29,61 @@ export default function Home() {
   const router = useRouter();
   const user = getUser();
 
+  const [pendingReports, setPendingReports] = useState<any[]>([]);
+  const [selectedReportIds, setSelectedReportIds] = useState<string[]>([]);
+  const [isCosigning, setIsCosigning] = useState(false);
+
   const API_URL = "https://mediassist-backend-1bom.onrender.com";
+
+  const fetchPendingReports = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/v1/reports/pending-cosignature`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPendingReports(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch pending reports", err);
+    }
+  };
+
+  useEffect(() => {
+    if (authChecked && user?.role === "doctor") {
+      fetchPendingReports();
+      // Poll every 10 seconds for new submissions from interns
+      const interval = setInterval(fetchPendingReports, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [authChecked]);
+
+  const handleCosignSelected = async () => {
+    if (selectedReportIds.length === 0) return;
+    setIsCosigning(true);
+    try {
+      const response = await fetch(`${API_URL}/api/v1/reports/cosign`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ report_ids: selectedReportIds }),
+      });
+      if (response.ok) {
+        alert("Selected reports co-signed successfully! Outbound calls initiated.");
+        setSelectedReportIds([]);
+        fetchPendingReports();
+      } else {
+        alert("Failed to co-sign reports.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error occurred during co-signing.");
+    } finally {
+      setIsCosigning(false);
+    }
+  };
 
   // --- Layer 9: Auth Protection ---
   useEffect(() => {
@@ -458,7 +512,7 @@ export default function Home() {
                   <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                 ) : (
                   <>
-                    Analyze Report & Start Call
+                    {user?.role === "intern" ? "Analyze & Submit for Co-Signature" : "Analyze Report & Start Call"}
                     <ChevronRight className="w-4 h-4" />
                   </>
                 )}
@@ -494,8 +548,12 @@ export default function Home() {
                   <div className="p-5 sm:p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 backdrop-blur-xl w-full overflow-hidden">
                     <div className="flex items-center justify-between mb-8">
                       <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Analysis Results</h2>
-                      <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-widest border border-emerald-500/20">
-                        Completed
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
+                        result.call_status.status === "pending_cosignature"
+                          ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                          : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      }`}>
+                        {result.call_status.status === "pending_cosignature" ? "Queued for Co-Signature" : "Completed"}
                       </span>
                     </div>
 
@@ -557,12 +615,17 @@ export default function Home() {
                           </div>
                         </div>
                         
-                        {result.call_status.audio_base64 && (
+                        {result.call_status.status !== "pending_cosignature" && result.call_status.audio_base64 && (
                           <audio 
                             controls 
                             className="h-10 rounded-full invert hue-rotate-180 brightness-150 opacity-80 hover:opacity-100 transition-opacity"
                             src={`data:audio/mp3;base64,${result.call_status.audio_base64}`}
                           />
+                        )}
+                        {result.call_status.status === "pending_cosignature" && (
+                          <p className="text-[10px] text-yellow-400 font-bold bg-yellow-500/5 px-3 py-1.5 rounded-lg border border-yellow-500/10">
+                            Simulation Paused. Waiting for Doctor's approval.
+                          </p>
                         )}
                       </div>
                     </div>
@@ -587,6 +650,118 @@ export default function Home() {
             </AnimatePresence>
           </div>
         </div>
+
+        {/* Doctor Co-Signature Queue Section */}
+        {user?.role === "doctor" && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-12 p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 backdrop-blur-xl"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2 text-zinc-100">
+                  <Shield className="w-5 h-5 text-blue-400" />
+                  Attending Doctor Co-Signature Queue
+                </h2>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Reports reviewed and pre-verified by Medical Interns. Approve to release outbound automated patient calls.
+                </p>
+              </div>
+
+              {pendingReports.length > 0 && (
+                <button
+                  onClick={handleCosignSelected}
+                  disabled={selectedReportIds.length === 0 || isCosigning}
+                  className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-800 disabled:text-zinc-650 text-black font-bold text-xs transition-all flex items-center gap-2 cursor-pointer active:scale-[0.98]"
+                >
+                  {isCosigning ? (
+                    <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      Co-Sign & Call ({selectedReportIds.length})
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+            {pendingReports.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-zinc-855 rounded-2xl bg-zinc-950/20">
+                <p className="text-zinc-500 text-sm">No reports pending doctor co-signature.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-zinc-800 bg-zinc-950/30">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-zinc-800 text-[10px] text-zinc-500 uppercase tracking-widest font-black bg-zinc-900/30">
+                      <th className="p-4 w-12 text-center">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 accent-emerald-500 rounded border-zinc-700 bg-zinc-950 cursor-pointer"
+                          checked={selectedReportIds.length === pendingReports.length}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedReportIds(pendingReports.map(r => r.report_id));
+                            } else {
+                              setSelectedReportIds([]);
+                            }
+                          }}
+                        />
+                      </th>
+                      <th className="p-4">Patient ID</th>
+                      <th className="p-4">Phone Number</th>
+                      <th className="p-4">Hemoglobin</th>
+                      <th className="p-4">Cholesterol</th>
+                      <th className="p-4">Vitamin D3</th>
+                      <th className="p-4">Prescription Notes</th>
+                      <th className="p-4 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingReports.map((report) => (
+                      <tr key={report.report_id} className="border-b border-zinc-800/80 hover:bg-zinc-900/20 transition-colors">
+                        <td className="p-4 text-center">
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 accent-emerald-500 rounded border-zinc-700 bg-zinc-950 cursor-pointer"
+                            checked={selectedReportIds.includes(report.report_id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedReportIds([...selectedReportIds, report.report_id]);
+                              } else {
+                                setSelectedReportIds(selectedReportIds.filter(id => id !== report.report_id));
+                              }
+                            }}
+                          />
+                        </td>
+                        <td className="p-4 font-mono text-xs text-zinc-300 font-bold">{report.patient_id.substring(0, 8)}...</td>
+                        <td className="p-4 text-xs text-zinc-400">{report.patient_phone}</td>
+                        <td className="p-4 text-xs font-mono">{report.hemoglobin ?? "—"}</td>
+                        <td className="p-4 text-xs font-mono">{report.cholesterol ?? "—"}</td>
+                        <td className="p-4 text-xs font-mono">{report.vitamin_d ?? "—"}</td>
+                        <td className="p-4 text-xs text-zinc-400 max-w-[200px] truncate" title={report.prescription_notes}>
+                          {report.prescription_notes}
+                        </td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => {
+                              setSelectedReportIds([report.report_id]);
+                              handleCosignSelected();
+                            }}
+                            className="px-3 py-1 rounded bg-zinc-900 border border-zinc-800 hover:border-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase transition-all"
+                          >
+                            Approve
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Footer */}
         <footer className="mt-20 pt-8 border-t border-zinc-900 text-center">
