@@ -554,3 +554,20 @@ The product focuses on:
 * patient clarity,
 * healthcare accessibility,
 * and scalable medical workflow automation.
+
+---
+
+# 17. Version History
+
+## Version 1.0.1
+Optimized the medical PDF extraction parser for high-accuracy blood marker parsing.
+
+## Version 1.0.2
+Enhanced AI response synthesis confidence checks and prompt guard parameter configurations.
+
+## Version 1.0.3
+Hardened system security middleware, implemented database-backed logging, and updated CORS policies.
+
+## Version 1.0.4
+Introduced "Patient" role for public registration with balanced 2x2 selection layout and added show/hide password toggles on authentication forms.
+
