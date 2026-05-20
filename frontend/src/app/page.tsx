@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Upload, 
@@ -11,15 +11,31 @@ import {
   AlertCircle, 
   ChevronRight,
   Mic2,
-  Stethoscope
+  Stethoscope,
+  LogOut,
+  Shield
 } from "lucide-react";
+import { isAuthenticated, getAuthHeaders, getUser, logout } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const router = useRouter();
+  const user = getUser();
 
   const API_URL = "https://mediassist-backend-1bom.onrender.com";
+
+  // --- Layer 9: Auth Protection ---
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push("/login");
+    } else {
+      setAuthChecked(true);
+    }
+  }, [router]);
 
   const handleUpload = async () => {
     if (!file) return;
@@ -34,8 +50,18 @@ export default function Home() {
     try {
       const response = await fetch(`${API_URL}/api/v1/reports/upload`, {
         method: "POST",
+        headers: {
+          // --- Layer 9: Send JWT token with every API request ---
+          ...getAuthHeaders(),
+        },
         body: formData,
       });
+
+      if (response.status === 401) {
+        // Token expired or invalid — redirect to login
+        logout();
+        return;
+      }
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -46,7 +72,7 @@ export default function Home() {
       setResult(data);
     } catch (error: any) {
       console.error("Upload failed", error);
-      alert("⚠️ Analysis Failed: " + error.message);
+      alert("Analysis Failed: " + error.message);
     } finally {
       setIsProcessing(false);
     }
@@ -66,6 +92,15 @@ export default function Home() {
     visible: { opacity: 1, scale: 1 }
   };
 
+  // Don't render until auth check is complete
+  if (!authChecked) {
+    return (
+      <main className="min-h-screen bg-[#09090b] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-zinc-700 border-t-blue-400 rounded-full animate-spin" />
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-blue-500/30 overflow-x-hidden">
       {/* Background Glow */}
@@ -76,26 +111,64 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-6 py-12 relative z-10">
         {/* Header */}
-        <header className="mb-16 text-center">
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider mb-4"
-          >
-            <Activity className="w-3 h-3" />
-            AI-Powered Healthcare
-          </motion.div>
-          <motion.h1 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-5xl md:text-7xl font-bold tracking-tighter bg-gradient-to-b from-white to-zinc-500 bg-clip-text text-transparent mb-4"
-          >
-            MediAssist AI
-          </motion.h1>
-          <p className="text-zinc-500 text-lg max-w-2xl mx-auto leading-relaxed">
-            Revolutionizing patient follow-ups with automated medical report analysis and intelligent voice simulations.
-          </p>
+        <header className="mb-16">
+          <div className="flex items-center justify-between mb-8">
+            {/* User Info */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3"
+            >
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center text-sm font-bold">
+                {user?.full_name?.charAt(0)?.toUpperCase() || "U"}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-zinc-200">{user?.full_name || "User"}</p>
+                <p className="text-xs text-zinc-500">{user?.role?.toUpperCase()} &bull; {user?.email}</p>
+              </div>
+            </motion.div>
+
+            {/* Auth Badge + Logout */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3"
+            >
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                <Shield className="w-3 h-3" />
+                Authenticated
+              </div>
+              <button
+                onClick={logout}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-800 text-zinc-500 text-xs font-bold hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all"
+              >
+                <LogOut className="w-3 h-3" />
+                Logout
+              </button>
+            </motion.div>
+          </div>
+
+          <div className="text-center">
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider mb-4"
+            >
+              <Activity className="w-3 h-3" />
+              AI-Powered Healthcare
+            </motion.div>
+            <motion.h1 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-5xl md:text-7xl font-bold tracking-tighter bg-gradient-to-b from-white to-zinc-500 bg-clip-text text-transparent mb-4"
+            >
+              MediAssist AI
+            </motion.h1>
+            <p className="text-zinc-500 text-lg max-w-2xl mx-auto leading-relaxed">
+              Revolutionizing patient follow-ups with automated medical report analysis and intelligent voice simulations.
+            </p>
+          </div>
         </header>
 
         <div className="grid lg:grid-cols-12 gap-8 items-start">
@@ -173,8 +246,8 @@ export default function Home() {
               </div>
               <div className="p-6 rounded-3xl bg-zinc-900/30 border border-zinc-800/50">
                 <Stethoscope className="w-5 h-5 text-emerald-400 mb-3" />
-                <p className="text-xs text-zinc-500 font-bold uppercase mb-1">Privacy</p>
-                <p className="text-sm text-zinc-300">HIPAA Compliant</p>
+                <p className="text-xs text-zinc-500 font-bold uppercase mb-1">Security</p>
+                <p className="text-sm text-zinc-300">9-Layer Protected</p>
               </div>
             </div>
           </div>
