@@ -6,10 +6,16 @@ Reports endpoint — Protected with:
 - Layer 9: JWT authentication required
 """
 
+import uuid
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Depends, Request
+from sqlalchemy.orm import Session
+from app.api.deps import get_db
+from app.models.user import User
+from app.models.patient import Patient
+from app.models.report import Report
+from app.models.prescription import Prescription
 from app.services import report_processing, ai_summarization, voice_service
 from app.services.auth_service import get_current_user
-from app.models.user import User
 from app.core.rate_limiter import limiter
 from app.core.validators import validate_patient_id, validate_phone_number, validate_pdf_file, sanitize_extracted_data
 from app.core.audit import log_event
@@ -23,12 +29,14 @@ async def upload_and_process_report(
     request: Request,
     patient_id: str = Form(...),
     patient_phone_number: str = Form(...),
+    prescription_notes: str = Form(...),
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Endpoint to upload a PDF report, process it, generate a summary,
-    and trigger an automated call.
+    save results to database, and trigger an automated call.
     Requires authentication (JWT Bearer token).
     """
     client_ip = request.client.host if request.client else "unknown"
@@ -66,8 +74,65 @@ async def upload_and_process_report(
         details=f"Summary length: {len(summary)} chars"
     )
 
-    # 3. Prescription & Doctor Notes Attached (simulated)
-    prescription_notes = "Take Vitamin D tablets once daily after breakfast. Avoid oily and spicy food for 5 days."
+    # 3. Database Persistence Logic
+    # Generate deterministic UUID from custom patient ID to fit schema
+    uuid_id = uuid.uuid5(uuid.NAMESPACE_DNS, patient_id)
+    try:
+        # Check if patient exists, create if not
+        db_patient = db.query(Patient).filter(Patient.patient_id == uuid_id).first()
+        if not db_patient:
+            db_patient = Patient(patient_id=uuid_id, age_group="adult", gender="unknown")
+            db_patient.set_phone(patient_phone_number)
+            db.add(db_patient)
+            db.flush()
+
+        # Parse extracted markers to save in report table
+        hemoglobin_val = None
+        if "Hemoglobin" in extracted_data:
+            try:
+                hemoglobin_val = float(extracted_data["Hemoglobin"])
+            except ValueError:
+                pass
+
+        cholesterol_val = None
+        if "Cholesterol" in extracted_data:
+            try:
+                cholesterol_val = float(extracted_data["Cholesterol"])
+            except ValueError:
+                pass
+
+        vitamin_d_val = None
+        if "Vitamin_D" in extracted_data:
+            try:
+                vitamin_d_val = float(extracted_data["Vitamin_D"])
+            except ValueError:
+                pass
+
+        db_report = Report(
+            patient_id=uuid_id,
+            hemoglobin=hemoglobin_val,
+            cholesterol=cholesterol_val,
+            vitamin_d=vitamin_d_val
+        )
+        db.add(db_report)
+        db.flush()
+
+        # Create prescription record using doctor-supplied notes
+        db_prescription = Prescription(
+            patient_id=uuid_id,
+            medicine_name=prescription_notes,
+            dosage="As prescribed",
+            timing="See notes"
+        )
+        db.add(db_prescription)
+        db.commit()
+    except Exception as db_err:
+        db.rollback()
+        print(f"[DATABASE ERROR] Failed to save clinical records: {db_err}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save report and prescription data to database."
+        )
 
     full_script = f"Hello, this is a message from your clinic regarding your recent report. {summary}. Your doctor has prescribed the following: {prescription_notes}. To repeat this message, press 1. To speak to a staff member, press 3."
 

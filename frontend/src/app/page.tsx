@@ -20,6 +20,9 @@ import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
+  const [patientId, setPatientId] = useState("");
+  const [patientPhone, setPatientPhone] = useState("");
+  const [prescriptionNotes, setPrescriptionNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -38,14 +41,15 @@ export default function Home() {
   }, [router]);
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (!file || !patientId || !patientPhone || !prescriptionNotes) return;
     setIsProcessing(true);
     setResult(null);
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("patient_id", "PAT-12345");
-    formData.append("patient_phone_number", "+919876543210");
+    formData.append("patient_id", patientId);
+    formData.append("patient_phone_number", patientPhone);
+    formData.append("prescription_notes", prescriptionNotes);
 
     try {
       const response = await fetch(`${API_URL}/api/v1/reports/upload`, {
@@ -216,6 +220,51 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Dynamic Patient & Prescription Inputs */}
+              <div className="mt-6 space-y-4 text-left">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-wider" htmlFor="patient-id">
+                    Patient ID
+                  </label>
+                  <input
+                    id="patient-id"
+                    type="text"
+                    value={patientId}
+                    onChange={(e) => setPatientId(e.target.value)}
+                    placeholder="e.g. PAT-12345"
+                    className="w-full px-4 py-2.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-wider" htmlFor="patient-phone">
+                    Patient Phone Number
+                  </label>
+                  <input
+                    id="patient-phone"
+                    type="tel"
+                    value={patientPhone}
+                    onChange={(e) => setPatientPhone(e.target.value)}
+                    placeholder="e.g. +919876543210"
+                    className="w-full px-4 py-2.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-wider" htmlFor="prescription-notes">
+                    Prescription Notes
+                  </label>
+                  <textarea
+                    id="prescription-notes"
+                    value={prescriptionNotes}
+                    onChange={(e) => setPrescriptionNotes(e.target.value)}
+                    placeholder="e.g. Take Vitamin D daily after breakfast..."
+                    rows={3}
+                    className="w-full px-4 py-2.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 transition-all resize-none"
+                  />
+                </div>
+              </div>
+
               <button 
                 type="button"
                 id="analyze-button"
@@ -223,7 +272,7 @@ export default function Home() {
                   console.log("Analyze button clicked!");
                   handleUpload();
                 }}
-                disabled={!file || isProcessing}
+                disabled={!file || !patientId || !patientPhone || !prescriptionNotes || isProcessing}
                 className="w-full mt-8 py-4 px-6 rounded-2xl bg-white text-black font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed transition-all active:scale-[0.98] cursor-pointer relative z-50"
               >
                 {isProcessing ? (
