@@ -12,7 +12,8 @@ class UserCreate(BaseModel):
     email: str = Field(..., min_length=5, max_length=255)
     password: str = Field(..., min_length=8, max_length=128)
     full_name: str = Field(..., min_length=1, max_length=255)
-    role: str = Field(default="staff", pattern="^(admin|doctor|staff)$")
+    role: str = Field(default="patient", pattern="^(admin|doctor|staff|patient)$")
+
 
 
 class UserLogin(BaseModel):

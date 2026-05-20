@@ -11,7 +11,7 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("staff");
+  const [role, setRole] = useState("patient");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -39,6 +39,7 @@ export default function RegisterPage() {
   };
 
   const roles = [
+    { value: "patient", label: "Patient", description: "Personal access" },
     { value: "staff", label: "Staff", description: "General access" },
     { value: "doctor", label: "Doctor", description: "Clinical access" },
     { value: "admin", label: "Admin", description: "Full access" },
@@ -162,7 +163,7 @@ export default function RegisterPage() {
               <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
                 Role
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {roles.map((r) => (
                   <button
                     key={r.value}
