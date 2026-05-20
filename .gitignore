@@ -159,9 +159,21 @@ dist/
 Thumbs.db
 
 # Project Specific
-backend/mediassist.db
+backend/*.db
+backend/*.sqlite
 backend/temp_calls/
-backend/.env
-frontend/.env
+backend/logs/
+backend/.env*
+frontend/.env*
 frontend/CLAUDE.md
 frontend/AGENTS.md
+
+# IDE / Editor Settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
