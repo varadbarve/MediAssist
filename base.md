@@ -369,7 +369,7 @@ Patient Phone Call
 
 ## AI Layer
 
-* OpenAI API / LLM
+* Google Gemini API (gemini-1.5-flash / gemini-pro)
 
 ---
 
@@ -381,13 +381,13 @@ Patient Phone Call
 
 ## Speech-to-Text
 
-* Whisper / Deepgram
+* Twilio Built-in Speech / DTMF keypad
 
 ---
 
 ## Text-to-Speech
 
-* ElevenLabs / Azure Speech
+* Edge TTS (edge-tts python package)
 
 ---
 
@@ -421,9 +421,40 @@ Patient Phone Call
 | Field           | Type   |
 | --------------- | ------ |
 | prescription_id | UUID   |
+| patient_id      | FK     |
 | medicine_name   | String |
 | dosage          | String |
 | timing          | String |
+
+---
+
+# User Table
+
+| Field           | Type    |
+| --------------- | ------- |
+| id              | Integer |
+| email           | String  |
+| hashed_password | String  |
+| full_name       | String  |
+| role            | String  |
+| is_active       | Boolean |
+| created_at      | DateTime|
+
+---
+
+# Audit Log Table
+
+| Field           | Type    |
+| --------------- | ------- |
+| id              | Integer |
+| timestamp       | DateTime|
+| event_type      | String  |
+| ip_address      | String  |
+| patient_id_hash | String  |
+| user_email      | String  |
+| action          | String  |
+| details         | Text    |
+| status          | String  |
 
 ---
 
