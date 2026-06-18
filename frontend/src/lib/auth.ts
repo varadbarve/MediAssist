@@ -3,7 +3,7 @@
  * Handles JWT token storage, login, registration, logout, and auth checks.
  */
 
-const API_URL = "https://mediassist-backend-1bom.onrender.com";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://mediassist-backend-1bom.onrender.com";
 
 // --- Types ---
 export interface User {

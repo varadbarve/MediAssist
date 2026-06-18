@@ -106,13 +106,11 @@ export default function AuthCard({ initialMode }: AuthCardProps) {
     setLoginError("");
   };
 
-  // Sorted as requested: Patient, Doctor, Staff, Medical Intern, Admin
+  // Only patient and staff roles are available for self-registration.
+  // Doctor, intern, and admin accounts must be created by an admin.
   const roles = [
     { value: "patient", label: "Patient", description: "Personal access" },
-    { value: "doctor", label: "Doctor", description: "Clinical access" },
     { value: "staff", label: "Staff", description: "General access" },
-    { value: "intern", label: "Medical Intern", description: "Supervised access" },
-    { value: "admin", label: "Admin", description: "Full access" },
   ];
 
   return (
@@ -362,7 +360,7 @@ export default function AuthCard({ initialMode }: AuthCardProps) {
                             regRole === r.value
                               ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400"
                               : "border-zinc-800 bg-zinc-950/50 text-zinc-500 hover:border-zinc-700"
-                          } ${index === 4 ? "col-span-2 justify-self-center w-[calc(50%-4px)]" : ""}`}
+                          }`}
                         >
                           <p className="text-sm font-bold">{r.label}</p>
                           <p className="text-[10px] mt-0.5 opacity-60">{r.description}</p>

@@ -33,7 +33,7 @@ export default function Home() {
   const [selectedReportIds, setSelectedReportIds] = useState<string[]>([]);
   const [isCosigning, setIsCosigning] = useState(false);
 
-  const API_URL = "https://mediassist-backend-1bom.onrender.com";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://mediassist-backend-1bom.onrender.com";
 
   const fetchPendingReports = async () => {
     try {
@@ -58,8 +58,9 @@ export default function Home() {
     }
   }, [authChecked]);
 
-  const handleCosignSelected = async () => {
-    if (selectedReportIds.length === 0) return;
+  const handleCosignSelected = async (ids?: string[]) => {
+    const targetIds = ids || selectedReportIds;
+    if (targetIds.length === 0) return;
     setIsCosigning(true);
     try {
       const response = await fetch(`${API_URL}/api/v1/reports/cosign`, {
@@ -68,7 +69,7 @@ export default function Home() {
           "Content-Type": "application/json",
           ...getAuthHeaders(),
         },
-        body: JSON.stringify({ report_ids: selectedReportIds }),
+        body: JSON.stringify({ report_ids: targetIds }),
       });
       if (response.ok) {
         alert("Selected reports co-signed successfully! Outbound calls initiated.");
@@ -671,7 +672,7 @@ export default function Home() {
 
               {pendingReports.length > 0 && (
                 <button
-                  onClick={handleCosignSelected}
+                  onClick={() => handleCosignSelected()}
                   disabled={selectedReportIds.length === 0 || isCosigning}
                   className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-800 disabled:text-zinc-650 text-black font-bold text-xs transition-all flex items-center gap-2 cursor-pointer active:scale-[0.98]"
                 >
@@ -746,8 +747,7 @@ export default function Home() {
                         <td className="p-4 text-right">
                           <button
                             onClick={() => {
-                              setSelectedReportIds([report.report_id]);
-                              handleCosignSelected();
+                              handleCosignSelected([report.report_id]);
                             }}
                             className="px-3 py-1 rounded bg-zinc-900 border border-zinc-800 hover:border-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase transition-all"
                           >

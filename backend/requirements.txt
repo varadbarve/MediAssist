@@ -2,13 +2,11 @@ fastapi
 uvicorn[standard]
 pydantic
 python-dotenv
-openai
 twilio
 python-multipart
 sqlalchemy
 alembic
 google-generativeai
-gTTS
 pymupdf
 psycopg2-binary
 edge-tts

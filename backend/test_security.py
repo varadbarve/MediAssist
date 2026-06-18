@@ -43,23 +43,22 @@ class TestMediAssistSecurity(unittest.TestCase):
 
     def test_01_user_registration_and_login(self):
         print("\n--- Testing Layer 9: Authentication Flow ---")
-        # 1. Register User
-        reg_payload = {
-            "email": "test_doctor@clinic.com",
-            "password": "securepassword123",
-            "full_name": "Dr. Test Doctor",
-            "role": "doctor"
-        }
-        response = self.client.post("/api/v1/auth/register", json=reg_payload)
-        self.assertEqual(response.status_code, 201)
-        data = response.json()
-        self.assertEqual(data["email"], "test_doctor@clinic.com")
-        self.assertEqual(data["role"], "doctor")
-        self.assertTrue(data["is_active"])
+        # 1. Create doctor user directly in DB (simulates admin creation)
+        #    Self-registration is now restricted to 'patient' and 'staff' roles only.
+        from app.services.auth_service import hash_password
+        doctor_user = User(
+            email="test_doctor@clinic.com",
+            hashed_password=hash_password("securepassword123"),
+            full_name="Dr. Test Doctor",
+            role="doctor",
+        )
+        self.db.add(doctor_user)
+        self.db.commit()
+        self.db.refresh(doctor_user)
 
-        # Check password is not returned plain or hashed in UserResponse
-        self.assertNotIn("password", data)
-        self.assertNotIn("hashed_password", data)
+        self.assertEqual(doctor_user.email, "test_doctor@clinic.com")
+        self.assertEqual(doctor_user.role, "doctor")
+        self.assertTrue(doctor_user.is_active)
 
         # 2. Login User
         login_payload = {
@@ -75,7 +74,48 @@ class TestMediAssistSecurity(unittest.TestCase):
         
         # Save token for other tests
         self.__class__.token = login_data["access_token"]
-        print("Registration and Login successful. Token obtained.")
+        print("Doctor created via DB + Login successful. Token obtained.")
+
+    def test_01b_privileged_role_registration_blocked(self):
+        print("\n--- Testing Layer 9: Privileged Role Self-Registration Blocked ---")
+        # Attempt to self-register as admin — should be rejected
+        for blocked_role in ["admin", "doctor", "intern"]:
+            reg_payload = {
+                "email": f"hacker_{blocked_role}@evil.com",
+                "password": "securepassword123",
+                "full_name": "Hacker",
+                "role": blocked_role
+            }
+            response = self.client.post("/api/v1/auth/register", json=reg_payload)
+            self.assertEqual(response.status_code, 403, f"Role '{blocked_role}' should be blocked but was allowed")
+            self.assertIn("Self-registration is only allowed", response.json()["detail"])
+            print(f"  Blocked self-registration for role: {blocked_role}")
+
+        # Verify allowed roles still work
+        reg_payload = {
+            "email": "allowed_staff@test.com",
+            "password": "securepassword123",
+            "full_name": "Test Staff",
+            "role": "staff"
+        }
+        response = self.client.post("/api/v1/auth/register", json=reg_payload)
+        self.assertEqual(response.status_code, 201)
+        # Clean up
+        self.db.query(User).filter(User.email == "allowed_staff@test.com").delete()
+        self.db.commit()
+        print("Privileged role self-registration successfully blocked.")
+
+    def test_01c_invalid_email_blocked(self):
+        print("\n--- Testing Layer 9: Invalid Email Format Blocked ---")
+        reg_payload = {
+            "email": "invalidemailformat",
+            "password": "securepassword123",
+            "full_name": "Bad Email",
+            "role": "staff"
+        }
+        response = self.client.post("/api/v1/auth/register", json=reg_payload)
+        self.assertEqual(response.status_code, 422)
+        print("  Blocked registration with invalid email format.")
 
     def test_02_auth_protection(self):
         print("\n--- Testing Layer 9: Auth Protection on Endpoints ---")
@@ -295,15 +335,17 @@ class TestMediAssistSecurity(unittest.TestCase):
             self.db.delete(existing_intern)
             self.db.commit()
 
-        # 1. Register intern
-        register_data = {
-            "email": "intern_test@test.com",
-            "password": "testpassword123",
-            "full_name": "Dr. Intern",
-            "role": "intern"
-        }
-        resp = self.client.post("/api/v1/auth/register", json=register_data)
-        self.assertEqual(resp.status_code, 201)
+        # 1. Create intern directly in DB (simulates admin creation,
+        #    since self-registration is restricted to patient/staff only)
+        from app.services.auth_service import hash_password
+        intern_user = User(
+            email="intern_test@test.com",
+            hashed_password=hash_password("testpassword123"),
+            full_name="Dr. Intern",
+            role="intern",
+        )
+        self.db.add(intern_user)
+        self.db.commit()
 
         # Log in as intern to get token
         login_data = {

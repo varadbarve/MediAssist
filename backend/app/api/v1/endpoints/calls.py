@@ -13,7 +13,7 @@ from app.core.config import TWILIO_AUTH_TOKEN
 router = APIRouter()
 
 
-def _verify_twilio_signature(request: Request) -> bool:
+def _verify_twilio_signature(request: Request, form_params: dict) -> bool:
     """
     Verify that an incoming webhook request was genuinely sent by Twilio.
     Uses Twilio's RequestValidator to check the X-Twilio-Signature header.
@@ -30,16 +30,21 @@ def _verify_twilio_signature(request: Request) -> bool:
         # Get the signature from headers
         signature = request.headers.get("X-Twilio-Signature", "")
         if not signature:
+            print("[SECURITY] Missing X-Twilio-Signature header.")
             return False
 
-        # Reconstruct the full URL
+        # Reconstruct the full URL (Twilio uses the public URL to compute the signature)
         url = str(request.url)
 
-        # For POST requests, we need the form params
-        # Note: This is a simplified check. In production with async,
-        # you'd need to read the body and parse it.
-        return True  # Basic header presence check for now
+        # Validate using the form parameters and signature
+        is_valid = validator.validate(url, form_params, signature)
+        if not is_valid:
+            print(f"[SECURITY] Twilio signature validation failed for URL: {url}")
+        return is_valid
 
+    except ImportError:
+        print("[SECURITY] Twilio library not installed — skipping signature verification.")
+        return True
     except Exception as e:
         print(f"[SECURITY] Twilio verification error: {e}")
         return False
@@ -54,8 +59,13 @@ async def handle_voice_webhook(request: Request, From: str = Form(...), Digits: 
     """
     client_ip = request.client.host if request.client else "unknown"
 
+    # Build form params dict for signature verification
+    form_params = {"From": From}
+    if Digits is not None:
+        form_params["Digits"] = Digits
+
     # --- Layer 2: Verify Twilio signature ---
-    if not _verify_twilio_signature(request):
+    if not _verify_twilio_signature(request, form_params):
         log_event(
             event_type="WEBHOOK",
             action="signature_verification_failed",

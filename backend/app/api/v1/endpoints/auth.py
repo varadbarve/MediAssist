@@ -28,7 +28,23 @@ async def register(request: Request, user_data: UserCreate, db: Session = Depend
     """
     Register a new user account.
     Password is hashed with bcrypt before storage.
+    Self-registration is limited to 'patient' and 'staff' roles only.
     """
+    # --- Security: Restrict self-registration roles ---
+    SELF_REGISTER_ROLES = {"patient", "staff"}
+    if user_data.role not in SELF_REGISTER_ROLES:
+        log_event(
+            event_type="AUTH",
+            action="register_blocked_privileged_role",
+            ip_address=request.client.host if request.client else "unknown",
+            details=f"Attempted self-registration with privileged role: {user_data.role}, email: {user_data.email}",
+            status="failure"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Self-registration is only allowed for: {', '.join(SELF_REGISTER_ROLES)}. Contact an admin for elevated roles."
+        )
+
     # Check if email already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
@@ -61,6 +77,52 @@ async def register(request: Request, user_data: UserCreate, db: Session = Depend
         ip_address=request.client.host if request.client else "unknown",
         user_email=user_data.email,
         details=f"Role: {user_data.role}"
+    )
+
+    return new_user
+
+
+@router.post("/admin/create-user", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
+async def admin_create_user(
+    request: Request,
+    user_data: UserCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Admin-only endpoint to create users with any role (doctor, intern, admin, etc.).
+    Requires a valid JWT token from an admin user.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can create users with elevated roles."
+        )
+
+    existing_user = db.query(User).filter(User.email == user_data.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account with this email already exists."
+        )
+
+    new_user = User(
+        email=user_data.email,
+        hashed_password=hash_password(user_data.password),
+        full_name=user_data.full_name,
+        role=user_data.role,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    log_event(
+        event_type="AUTH",
+        action="admin_create_user",
+        ip_address=request.client.host if request.client else "unknown",
+        user_email=current_user.email,
+        details=f"Created user {user_data.email} with role: {user_data.role}"
     )
 
     return new_user
